@@ -20,7 +20,7 @@ Desarrollo:
     - Existira un archivo de configuracion que estara en el directorio: '/etc/server/config.conf'. Tambien se debera crear un archivo de registro (log), donde se almacene la actividad del servidor, o sea, que guarde peticiones de los clientes a tal archivo, estado de la ejecucion y hora de la misma.
     - El servidor debe iniciar cuando arranca el sistema (asegurandose de incorporar todas las dependencias de red) y la implementacion del mismo quedara a diseño de los creadores, puede utilizar SYsVinit o Systemd service, se debe justificar la eleccion.
     - El nombre del servidor sera: ImageServer y debera implementar las funciones de start, stop, status y restart. Las cuales consisten en iniciar, parar, reiniciar (debe cargar los datos de configuracion) y ver el estado del servidor en cualquier momento desde la consola.
-    - Se debe asegurar que el Servidor trabaje como se espera con comprobacion usando el comando 'top' o 'ps'.
+    - Se debe asegurar que el Servidor trabaje como se espera, con comprobacion usando el comando 'top' o 'ps' de que de verdad es un daemon.
     - El servidor debe ejecutarse en diferente maquina que el cliente, y por ende, el cliente se ejecutara en una maquina virtual o un contenedor.
 =========================================
 (Ejemplo de archivo de configuracion)
@@ -76,3 +76,18 @@ daemon: ImageService is running (pid 17039)
     - Sobre la ecualizacion del histograma, este toma en cuenta el histograma de los colores, para posteriormente calcular la frecuencia y con ello hacer la transformacion de cada pixel. Para el mapeo del nuevo pixel se puede utilizar el siguiente mapeo:
     Nuevo_pixel = FrecuenciaAcumulada(pixel) * 255 / (ancho*alto)
 
+
+Plan de desarrollo:
+1- Montar la aplicacion grafica del cliente la cual nos permita preparar un set de MULTIPLES imagenes listas.
+2- Hacer que nuestra aplicacion de cliente extraiga las propiedades binarias de nuestras imagenes y que las tenga listas en memoria para mandar hacer el servidor.
+3- Hacer un cliente/servidor y un protocolo que nos permita mandar UNA imagen a la vez, mandandolo por trozos de su parte binaria.
+4- Tener la parte del servidor la cual simplemente va a estar siempre listo para recibir las imagenes y asegurarse que sea capaz de recibir una imagen a la vez secuencialmente. SIEMPRE ESCUCHANDO.
+5- Montarle al servidor la capacidad para aplicarle a las imagenes sus dos funciones, histograma y clasificar
+6- Montarle al servidor la funcionalidad de que sea un servicio de tipo daemon en Linux y sus funciones extras
+7- Hacer el testing con todo 'local' pero asegurandose que todo movimiento de informacion SIEMPRE sea por 'https:1717' y que el servidor si sea un daemon
+8- Montar el servidor en una maquina virtual
+9- Modificar la configuracion del programa de cliente para que mande las imagenes por la red a la maquina virtual en la nube
+
+*Al mismo tiempo:*
+1- Investigar y justificar las decisiones sobre librerias y sobre como implementar un daemon en Linux
+2- Preparacion general de la documentacion y de las preguntas que vamos a estar realizando
