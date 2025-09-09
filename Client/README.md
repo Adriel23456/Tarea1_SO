@@ -1,0 +1,1 @@
+Aqui se explicara la instalacion y ejecucion total del cliente ya sea todo local o con el servidor en la nube.
