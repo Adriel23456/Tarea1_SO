@@ -1,31 +1,10 @@
-// Concurrent TCP/TLS image server with final ACK, TLS (OpenSSL), and thread-per-connection.
-// Saves to assets/incoming/<uuid>_<filename> and logs to the configured log file.
-//
-// New: reads server configuration from assets/config.json (all in English):
-// {
-//   "server": {
-//     "port": 1717,
-//     "tls_enabled": 1,
-//     "tls_dir": "assets/tls"
-//   },
-//   "paths": {
-//     "log_file": "assets/log.txt",
-//     "incoming_dir": "assets/incoming",
-//     "histogram_dir": "assets/histogram",
-//     "colors_dir": {
-//       "red": "assets/colors/red",
-//       "green": "assets/colors/green",
-//       "blue": "assets/colors/blue"
-//     }
-//   }
-// }
-//
-// Build (Makefile updated):
-//   LIBS = -luuid -lssl -lcrypto -lpthread -ljson-c
+// Concurrent TCP/TLS image server with image processing (color classification & histogram equalization)
+// Saves to assets/incoming/<uuid>_<filename> and processes according to requested processing type
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>  // For strcasecmp
 #include <errno.h>
 #include <uuid/uuid.h>
 #include <unistd.h>
@@ -39,7 +18,24 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <json-c/json.h>
+#include <math.h>
 #include "protocol.h"
+
+// STB Image libraries - single header implementation
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image.h"
+#include "stb_image_write.h"
+
+// +++ NUEVO: escritor GIF animado de un solo header
+#include "gif.h"
+#include <stdbool.h>
+
+// Forward declaration para evitar "implicit declaration"
+static void process_gif_image(const char* input_path,
+                              const char* image_id,
+                              const char* filename,
+                              uint8_t processing_type);
 
 #define BACKLOG 10
 
@@ -317,6 +313,305 @@ static int tls_init_ctx(void) {
     return 0;
 }
 
+// -------- Image Processing Functions --------
+
+// Determine dominant color channel (R, G, or B)
+static char classify_image_by_color(unsigned char* data, int width, int height, int channels) {
+    if (channels < 3) return 'r';
+    unsigned long long r_sum = 0, g_sum = 0, b_sum = 0;
+    int pixel_count = width * height;
+    for (int i = 0; i < pixel_count; i++) {
+        int idx = i * channels;
+        r_sum += data[idx + 0];
+        g_sum += data[idx + 1];
+        b_sum += data[idx + 2];
+    }
+    if (r_sum >= g_sum && r_sum >= b_sum) return 'r';
+    else if (g_sum >= r_sum && g_sum >= b_sum) return 'g';
+    else return 'b';
+}
+
+// Apply histogram equalization to improve contrast
+static void apply_histogram_equalization(unsigned char* data, int width, int height, int channels) {
+    int pixel_count = width * height;
+    for (int ch = 0; ch < channels && ch < 3; ch++) {
+        int histogram[256] = {0};
+        for (int i = 0; i < pixel_count; i++) histogram[data[i*channels + ch]]++;
+        int cumulative[256] = {0};
+        cumulative[0] = histogram[0];
+        for (int i = 1; i < 256; i++) cumulative[i] = cumulative[i-1] + histogram[i];
+        for (int i = 0; i < pixel_count; i++) {
+            int idx = i*channels + ch;
+            int old_value = data[idx];
+            int new_value = (cumulative[old_value] * 255) / pixel_count;
+            data[idx] = (unsigned char)new_value;
+        }
+    }
+}
+
+// Save image based on format
+static int save_image(const char* path, unsigned char* data, int width, int height, int channels, const char* format) {
+    int result = 0;
+    if (strcmp(format, "png") == 0) {
+        result = stbi_write_png(path, width, height, channels, data, width * channels);
+    } else if (strcmp(format, "jpg") == 0 || strcmp(format, "jpeg") == 0) {
+        result = stbi_write_jpg(path, width, height, channels, data, 95);
+    } else if (strcmp(format, "gif") == 0) {
+        // Para imágenes GIF estáticas (raro), guardamos como PNG por no tener escritor de GIF estático aquí
+        // pero en este server, los GIF pasan por process_gif_image (animados o no).
+        // Por defecto, caemos a PNG para evitar perder info si llegara aquí.
+        result = stbi_write_png(path, width, height, channels, data, width * channels);
+    } else {
+        result = stbi_write_png(path, width, height, channels, data, width * channels);
+    }
+    return result;
+}
+
+// Process image based on processing type
+static void process_image(const char* input_path, const char* image_id, const char* filename, 
+                          const char* format, uint8_t processing_type) {
+
+    // Si es GIF, canalizar al pipeline específico (multi-frame). NO tocamos incoming.
+    if (format && (strcasecmp(format, "gif") == 0)) {
+        process_gif_image(input_path, image_id, filename, processing_type);
+        return;
+    }
+
+    // ---- Resto de formatos (png/jpg/jpeg) ----
+    int width, height, channels;
+    unsigned char* img_data = stbi_load(input_path, &width, &height, &channels, 0);
+    if (!img_data) {
+        log_line("Failed to load image %s for processing", input_path);
+        return;
+    }
+
+    log_line("Processing image %s: %dx%d, %d channels, type=%u (static)", 
+             image_id, width, height, channels, processing_type);
+
+    // Color classification
+    if (processing_type == PROC_COLOR_CLASSIFICATION || processing_type == PROC_BOTH) {
+        char dominant_color = classify_image_by_color(img_data, width, height, channels);
+        const char* color_dir = g_cfg.colors_red; const char* cname="red";
+        if (dominant_color == 'g') { color_dir = g_cfg.colors_green; cname="green"; }
+        else if (dominant_color == 'b') { color_dir = g_cfg.colors_blue; cname="blue"; }
+
+        char color_path[1024];
+        snprintf(color_path, sizeof(color_path), "%s/%s_%s", color_dir, image_id, filename);
+        if (save_image(color_path, img_data, width, height, channels, format)) {
+            log_line("Color classification: saved to %s (dominant: %s)", color_path, cname);
+        } else {
+            log_line("Failed to save color-classified image to %s", color_path);
+        }
+    }
+
+    // Histogram equalization
+    if (processing_type == PROC_HISTOGRAM || processing_type == PROC_BOTH) {
+        size_t img_size = (size_t)width * height * channels;
+        unsigned char* hist_data = (unsigned char*)malloc(img_size);
+        if (hist_data) {
+            memcpy(hist_data, img_data, img_size);
+            apply_histogram_equalization(hist_data, width, height, channels);
+
+            char hist_path[1024];
+            snprintf(hist_path, sizeof(hist_path), "%s/%s_%s", g_cfg.histogram_dir, image_id, filename);
+            if (save_image(hist_path, hist_data, width, height, channels, format)) {
+                log_line("Histogram equalization: saved to %s", hist_path);
+            } else {
+                log_line("Failed to save histogram-equalized image to %s", hist_path);
+            }
+            free(hist_data);
+        }
+    }
+
+    stbi_image_free(img_data);
+}
+
+// Lee archivo completo en memoria (para stbi_load_gif_from_memory)
+static unsigned char* read_file_fully(const char* path, int* out_len) {
+    FILE* f = fopen(path, "rb");
+    if (!f) return NULL;
+    fseek(f, 0, SEEK_END);
+    long sz = ftell(f);
+    if (sz < 0) { fclose(f); return NULL; }
+    fseek(f, 0, SEEK_SET);
+    unsigned char* buf = (unsigned char*)malloc((size_t)sz);
+    if (!buf) { fclose(f); return NULL; }
+    if (fread(buf, 1, (size_t)sz, f) != (size_t)sz) {
+        free(buf); fclose(f); return NULL;
+    }
+    fclose(f);
+    *out_len = (int)sz;
+    return buf;
+}
+
+// Convierte un frame de N canales a RGBA (gif.h trabaja cómodo con 4 canales)
+static unsigned char* to_rgba(const unsigned char* src, int w, int h, int comp) {
+    size_t n = (size_t)w * h;
+    unsigned char* out = (unsigned char*)malloc(n * 4);
+    if (!out) return NULL;
+    for (size_t i = 0; i < n; ++i) {
+        unsigned char r=0,g=0,b=0,a=255;
+        if (comp == 1) { r = g = b = src[i]; }
+        else if (comp >= 3) {
+            r = src[i*comp + 0];
+            g = src[i*comp + 1];
+            b = src[i*comp + 2];
+            if (comp == 4) a = src[i*4 + 3];
+        }
+        out[i*4 + 0] = r;
+        out[i*4 + 1] = g;
+        out[i*4 + 2] = b;
+        out[i*4 + 3] = a;
+    }
+    return out;
+}
+
+// Escritura de GIF animado con gif.h
+// Convierte delays a centésimas de segundo (10ms) con heurística y clamps
+static int write_gif_animation(const char* path,
+                               unsigned char** frames_rgba,
+                               const int* delays_in,        // lo que entrega stbi
+                               int frame_count,
+                               int w, int h) {
+    GifWriter writer = {0};
+    if (!GifBegin(&writer, path, w, h, 0xFFFF, 8, false)) {
+        return 0;
+    }
+
+    // Heurística: detectar si vienen en ms y convertir a cs
+    // Regla simple: si hay algún delay >= 20 y es múltiplo de 10, asumimos ms.
+    // (GIFs reales suelen usar 20, 30, 40, 50 ms, etc. Si ya están en cs, típicos valores: 1..10)
+    int assume_ms = 0;
+    if (delays_in) {
+        for (int i = 0; i < frame_count; ++i) {
+            int d = delays_in[i];
+            if (d >= 20 && (d % 10) == 0) { assume_ms = 1; break; }
+        }
+    }
+
+    for (int i = 0; i < frame_count; ++i) {
+        int d_in = delays_in ? delays_in[i] : 50; // fallback 50 ms
+        // Normalizar a centésimas:
+        int d_cs = assume_ms ? (d_in + 5) / 10 : d_in;  // redondeo .5 arriba si venía en ms
+        // Clamps comunes de visores/browsers: mínimo 2 cs (20 ms) para que no “salten”
+        if (d_cs < 2) d_cs = 2;
+        // (Opcional) máximo razonable: evita GIFs que quedan congelados por valores erróneos
+        if (d_cs > 5000) d_cs = 5000; // 50 s máx por frame
+
+        if (!GifWriteFrame(&writer, frames_rgba[i], w, h, (uint32_t)d_cs, 8, false)) {
+            GifEnd(&writer);
+            return 0;
+        }
+    }
+
+    GifEnd(&writer);
+    return 1;
+}
+
+// Procesa GIF animado: clasifica (copiando animación) y/o ecualiza por frame (y guarda animación)
+static void process_gif_image(const char* input_path,
+                              const char* image_id,
+                              const char* filename,
+                              uint8_t processing_type) {
+    // 1) leer archivo en memoria
+    int len = 0;
+    unsigned char* filebuf = read_file_fully(input_path, &len);
+    if (!filebuf) {
+        log_line("GIF: cannot read file into memory: %s", input_path);
+        return;
+    }
+
+    // 2) cargar todos los frames
+    int w=0, h=0, frames=0, comp=0;
+    int* delays = NULL; // centésimas de segundo
+    unsigned char* all = stbi_load_gif_from_memory(filebuf, len, &delays, &w, &h, &frames, &comp, 4 /*req_comp RGBA*/);
+    free(filebuf);
+
+    if (!all || frames <= 0 || w <= 0 || h <= 0) {
+        log_line("GIF: failed to decode frames: %s", input_path);
+        if (all) stbi_image_free(all);
+        if (delays) STBI_FREE(delays);
+        return;
+    }
+
+    // all tiene [frames] bloques consecutivos de w*h*4 bytes (por req_comp=4)
+    int rgba_comp = 4;
+    size_t frame_stride = (size_t)w * h * rgba_comp;
+
+    // --- CLASIFICACIÓN DE COLOR (copiando la animación completa) ---
+    if (processing_type == PROC_COLOR_CLASSIFICATION || processing_type == PROC_BOTH) {
+        // Dominante sobre TODOS los frames (suma global de RGB)
+        unsigned long long r_sum=0, g_sum=0, b_sum=0;
+        size_t pixcount = (size_t)w * h;
+        for (int f = 0; f < frames; ++f) {
+            unsigned char* frame = all + f*frame_stride;
+            for (size_t i = 0; i < pixcount; ++i) {
+                r_sum += frame[i*4 + 0];
+                g_sum += frame[i*4 + 1];
+                b_sum += frame[i*4 + 2];
+            }
+        }
+        char dc = 'r';
+        const char* color_dir = g_cfg.colors_red; const char* cname = "red";
+        if (g_sum >= r_sum && g_sum >= b_sum) { dc='g'; color_dir=g_cfg.colors_green; cname="green"; }
+        else if (b_sum >= r_sum && b_sum >= g_sum){ dc='b'; color_dir=g_cfg.colors_blue;  cname="blue"; }
+
+        char out_path[1024];
+        // asegurar extensión .gif (por seguridad)
+        const char* ext = ".gif";
+        snprintf(out_path, sizeof(out_path), "%s/%s_%s%s",
+                 color_dir, image_id, filename, (strstr(filename, ".gif")||strstr(filename, ".GIF"))?"":ext);
+
+        // Construir arreglo de punteros a frames para gif.h
+        unsigned char** frame_ptrs = (unsigned char**)malloc(sizeof(unsigned char*) * frames);
+        if (!frame_ptrs) {
+            log_line("GIF: OOM frame_ptrs (classification)");
+        } else {
+            for (int f = 0; f < frames; ++f) frame_ptrs[f] = all + f*frame_stride;
+            if (write_gif_animation(out_path, frame_ptrs, delays, frames, w, h)) {
+                log_line("Color classification GIF: saved to %s (dominant %s)", out_path, cname);
+            } else {
+                log_line("Color classification GIF: failed to write %s", out_path);
+            }
+            free(frame_ptrs);
+        }
+    }
+
+    // --- HISTOGRAMA POR FRAME ---
+    if (processing_type == PROC_HISTOGRAM || processing_type == PROC_BOTH) {
+        // Copiar frames, ecualizar RGB y escribir animación
+        unsigned char** out_frames = (unsigned char**)malloc(sizeof(unsigned char*) * frames);
+        if (!out_frames) {
+            log_line("GIF: OOM out_frames (histogram)");
+        } else {
+            for (int f = 0; f < frames; ++f) {
+                unsigned char* src = all + f*frame_stride;
+                unsigned char* dst = (unsigned char*)malloc(frame_stride);
+                if (!dst) { out_frames[f]=NULL; continue; }
+                memcpy(dst, src, frame_stride);
+                // equalizar solo RGB; alpha queda igual
+                apply_histogram_equalization(dst, w, h, 4);
+                out_frames[f] = dst;
+            }
+
+            char out_path[1024];
+            const char* ext = ".gif";
+            snprintf(out_path, sizeof(out_path), "%s/%s_%s%s",
+                     g_cfg.histogram_dir, image_id, filename, (strstr(filename, ".gif")||strstr(filename, ".GIF"))?"":ext);
+
+            int ok = write_gif_animation(out_path, out_frames, delays, frames, w, h);
+            if (ok) log_line("Histogram equalization GIF: saved to %s", out_path);
+            else    log_line("Histogram equalization GIF: failed to write %s", out_path);
+
+            for (int f = 0; f < frames; ++f) free(out_frames[f]);
+            free(out_frames);
+        }
+    }
+
+    stbi_image_free(all);
+    if (delays) STBI_FREE(delays);
+}
+
 // -------- Per-connection thread --------
 static void* handle_client(void* arg) {
     Conn* c = (Conn*)arg;
@@ -327,6 +622,8 @@ static void* handle_client(void* arg) {
     FILE*    out = NULL;
     uint32_t expected_chunks = 0, received_chunks = 0;
     uint32_t remaining_bytes = 0;
+    uint8_t  processing_type = 0;
+    char     saved_path[1024] = {0};
 
     int done = 0;
     while (!done) {
@@ -360,28 +657,29 @@ static void* handle_client(void* arg) {
 
             uint32_t total_size = from_be32_s(info.total_size);
             expected_chunks = from_be32_s(info.total_chunks);
+            processing_type = info.processing_type;  // Save for later processing
             strncpy(current_filename, info.filename, sizeof(current_filename)-1);
             strncpy(current_format,  info.format,  sizeof(current_format)-1);
             current_filename[sizeof(current_filename)-1] = '\0';
             current_format[sizeof(current_format)-1]     = '\0';
 
             // Open output file under configured incoming_dir
-            char outpath[1024];
-            snprintf(outpath, sizeof(outpath), "%s/%s_%s", g_cfg.incoming_dir, h.image_id, current_filename);
-            if (ensure_parent_dir(outpath) != 0) {
-                log_line("Failed to create parent dir for %s", outpath);
+            snprintf(saved_path, sizeof(saved_path), "%s/%s_%s", 
+                    g_cfg.incoming_dir, h.image_id, current_filename);
+            if (ensure_parent_dir(saved_path) != 0) {
+                log_line("Failed to create parent dir for %s", saved_path);
                 break;
             }
-            out = fopen(outpath, "wb");
+            out = fopen(saved_path, "wb");
             if (!out) {
-                log_line("Failed to open output file %s: %s", outpath, strerror(errno));
+                log_line("Failed to open output file %s: %s", saved_path, strerror(errno));
                 break;
             }
             remaining_bytes = total_size;
 
             log_line("IMAGE_INFO: id=%s file=%s size=%u bytes chunks=%u proc=%u fmt=%s",
                 h.image_id, current_filename, total_size, expected_chunks,
-                (unsigned)info.processing_type, current_format);
+                processing_type, current_format);
 
         } else if (h.type == MSG_IMAGE_CHUNK) {
             if (!out) { log_line("CHUNK without open file"); break; }
@@ -424,6 +722,12 @@ static void* handle_client(void* arg) {
                      h.image_id, current_filename, fmt[0]?fmt:current_format,
                      received_chunks, remaining_bytes);
 
+            // Process the image based on processing_type
+            if (processing_type > 0) {
+                process_image(saved_path, h.image_id, current_filename, 
+                            fmt[0] ? fmt : current_format, processing_type);
+            }
+
             // Final ACK
             if (send_message(c, MSG_ACK, h.image_id, NULL, 0) != 0) {
                 log_line("Failed sending final ACK");
@@ -434,7 +738,9 @@ static void* handle_client(void* arg) {
             current_uuid[0]   = 0;
             current_filename[0] = 0;
             current_format[0] = 0;
+            saved_path[0] = 0;
             expected_chunks = received_chunks = remaining_bytes = 0;
+            processing_type = 0;
 
         } else {
             // Consume unknown payload if any, then ignore
@@ -510,7 +816,7 @@ int main(void) {
         close(srv);
         return 1;
     }
-    log_line("Listening...");
+    log_line("Listening with image processing enabled...");
 
     // Accept loop with thread-per-connection
     for (;;) {

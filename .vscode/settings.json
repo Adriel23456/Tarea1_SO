@@ -3,7 +3,9 @@
         "stdint.h": "c",
         "dialogs.h": "c",
         "gui.h": "c",
-        "protocol.h": "c"
+        "protocol.h": "c",
+        "stb_image.h": "c",
+        "stdbool.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

@@ -1,13 +1,29 @@
+# Makefile
 CC = gcc
 CFLAGS = -Wall -Wextra -O2 -g
-LIBS = -luuid -lssl -lcrypto -lpthread -ljson-c
+LIBS = -luuid -lssl -lcrypto -lpthread -ljson-c -lm
 
 SRCDIR = src
 SOURCES = $(SRCDIR)/main.c
 OBJECTS = $(SOURCES:.c=.o)
 TARGET = image-server
 
-all: $(TARGET)
+all: check-stb check-gif $(TARGET)
+
+check-stb:
+	@if [ ! -f $(SRCDIR)/stb_image.h ] || [ ! -f $(SRCDIR)/stb_image_write.h ]; then \
+		echo "STB headers not found. Running download script..."; \
+		chmod +x download_stb.sh; \
+		./download_stb.sh; \
+	fi
+
+# NUEVO: bajar gif.h si no está presente
+check-gif:
+	@if [ ! -f $(SRCDIR)/gif.h ]; then \
+		echo "gif.h not found. Running download script..."; \
+		chmod +x download_gif.sh; \
+		./download_gif.sh; \
+	fi
 
 $(TARGET): $(OBJECTS)
 	$(CC) $(OBJECTS) -o $(TARGET) $(LIBS)
@@ -19,6 +35,10 @@ $(SRCDIR)/%.o: $(SRCDIR)/%.c
 clean:
 	rm -f $(OBJECTS) $(TARGET)
 	@echo "Clean complete"
+
+clean-all: clean
+	rm -f $(SRCDIR)/stb_*.h $(SRCDIR)/gif.h
+	@echo "Clean complete (including header libraries)"
 
 setup:
 	mkdir -p assets \
@@ -63,8 +83,15 @@ rebuild: clean setup all
 
 help:
 	@echo "Targets:"
-	@echo "  make            - build"
+	@echo "  make            - download headers and build"
 	@echo "  make setup      - create assets dirs, default config and log"
-	@echo "  make clean      - clean"
+	@echo "  make clean      - clean object files and binary"
+	@echo "  make clean-all  - clean everything including headers"
 	@echo "  make rebuild    - clean+setup+build"
-.PHONY: all clean setup rebuild help
+	@echo ""
+	@echo "Image Processing Features:"
+	@echo "  - Color classification (dominant color detection)"
+	@echo "  - Histogram equalization (contrast enhancement)"
+	@echo "  - GIF animated support: per-frame processing + writing"
+
+.PHONY: all clean clean-all setup rebuild help check-stb check-gif
