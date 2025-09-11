@@ -3,11 +3,15 @@
 
 CC = gcc
 CFLAGS = `pkg-config --cflags gtk4` -Wall -Wextra -g
-LIBS = `pkg-config --libs gtk4`
+LIBS = `pkg-config --libs gtk4` -ljson-c
 
 # Source files
 SRCDIR = src
-SOURCES = $(SRCDIR)/main.c $(SRCDIR)/gui.c $(SRCDIR)/dialogs.c
+SOURCES = $(SRCDIR)/main.c \
+          $(SRCDIR)/gui.c \
+          $(SRCDIR)/dialogs.c \
+          $(SRCDIR)/network.c
+
 OBJECTS = $(SOURCES:.c=.o)
 
 # Output binary
@@ -38,7 +42,7 @@ clean:
 # Install dependencies (Ubuntu/Debian)
 install-deps:
 	sudo apt update
-	sudo apt install -y build-essential pkg-config libgtk-4-dev
+	sudo apt install -y build-essential pkg-config libgtk-4-dev libjson-c-dev
 	@echo "Dependencies installed"
 
 # Run the application
@@ -72,7 +76,7 @@ help:
 	@echo "  make clean        - Remove build files"
 	@echo "  make setup        - Create assets directory and default files"
 	@echo "  make rebuild      - Clean, setup, and build"
-	@echo "  make install-deps - Install GTK4 dependencies (Ubuntu/Debian)"
+	@echo "  make install-deps - Install GTK4 and json-c dependencies"
 	@echo "  make help         - Show this help message"
 
 .PHONY: all clean dirs run setup rebuild install-deps help

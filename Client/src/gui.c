@@ -7,8 +7,69 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <json-c/json.h>
 #include "gui.h"
 #include "dialogs.h"
+#include "network.h"
+#include "protocol.h"
+
+// Structure for progress dialog
+typedef struct {
+    GtkWidget *window;
+    GtkWidget *progress_bar;
+    GtkWidget *label;
+    ProcessingType proc_type;
+    GSList *image_list;
+} SendDialogData;
+
+// Progress callback
+static void send_progress_callback(const char* message, double progress) {
+    printf("%s (%.0f%%)\n", message, progress * 100);
+}
+
+// Thread function for sending
+static gpointer send_thread_func(gpointer data) {
+    SendDialogData *dialog_data = (SendDialogData*)data;
+    
+    // Load config
+    const char* host = "localhost";
+    int port = DEFAULT_PORT;
+    
+    // Try to read from config file
+    FILE* fp = fopen("assets/connection.json", "r");
+    if (fp) {
+        fseek(fp, 0, SEEK_END);
+        long size = ftell(fp);
+        fseek(fp, 0, SEEK_SET);
+        
+        char* json_str = malloc(size + 1);
+        fread(json_str, 1, size, fp);
+        json_str[size] = '\0';
+        fclose(fp);
+        
+        struct json_object* root = json_tokener_parse(json_str);
+        if (root) {
+            struct json_object* server_obj;
+            if (json_object_object_get_ex(root, "server", &server_obj)) {
+                struct json_object* host_obj, *port_obj;
+                if (json_object_object_get_ex(server_obj, "host", &host_obj)) {
+                    host = json_object_get_string(host_obj);
+                }
+                if (json_object_object_get_ex(server_obj, "port", &port_obj)) {
+                    port = json_object_get_int(port_obj);
+                }
+            }
+            // Note: don't free json objects, they manage their own memory
+        }
+        free(json_str);
+    }
+    
+    // Send images
+    int result = send_all_images(dialog_data->image_list, host, port, 
+                                 dialog_data->proc_type, send_progress_callback);
+    
+    return GINT_TO_POINTER(result);
+}
 
 // Global app data
 static AppData *g_app_data = NULL;
@@ -216,20 +277,119 @@ void on_config_button_clicked(GtkWidget *button, gpointer user_data) {
 }
 
 /**
- * Send images button callback - Will send images to server (placeholder for now)
+ * Updated send button callback
  */
 void on_send_button_clicked(GtkWidget *button, gpointer user_data) {
-    (void)button; // Suppress unused parameter warning
+    (void)button;
     AppData *app_data = (AppData *)user_data;
     
     if (app_data->loaded_images == NULL) {
         show_message_dialog(GTK_WINDOW(app_data->window), 
                            "No Images", 
                            "Please load some images first!");
-    } else {
+        return;
+    }
+    
+    // Create processing type dialog
+    GtkWidget *dialog;
+    GtkWidget *content;
+    GtkWidget *box;
+    GtkWidget *label;
+    GtkWidget *radio_hist, *radio_color, *radio_both;
+    
+    dialog = gtk_dialog_new_with_buttons("Select Processing Type",
+                                         GTK_WINDOW(app_data->window),
+                                         GTK_DIALOG_MODAL,
+                                         "_Cancel", GTK_RESPONSE_CANCEL,
+                                         "_Send", GTK_RESPONSE_OK,
+                                         NULL);
+    
+    content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+    box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    gtk_widget_set_margin_start(box, 20);
+    gtk_widget_set_margin_end(box, 20);
+    gtk_widget_set_margin_top(box, 20);
+    gtk_widget_set_margin_bottom(box, 20);
+    
+    label = gtk_label_new("Select processing type for images:");
+    gtk_box_append(GTK_BOX(box), label);
+    
+    radio_hist = gtk_check_button_new_with_label("Histogram Equalization");
+    gtk_check_button_set_active(GTK_CHECK_BUTTON(radio_hist), TRUE);
+    
+    radio_color = gtk_check_button_new_with_label("Color Classification");
+    gtk_check_button_set_group(GTK_CHECK_BUTTON(radio_color), 
+                               GTK_CHECK_BUTTON(radio_hist));
+    
+    radio_both = gtk_check_button_new_with_label("Both");
+    gtk_check_button_set_group(GTK_CHECK_BUTTON(radio_both), 
+                               GTK_CHECK_BUTTON(radio_hist));
+    
+    gtk_box_append(GTK_BOX(box), radio_hist);
+    gtk_box_append(GTK_BOX(box), radio_color);
+    gtk_box_append(GTK_BOX(box), radio_both);
+    gtk_box_append(GTK_BOX(content), box);
+    
+    gtk_widget_show(dialog);
+    
+    int response = gtk_dialog_run(GTK_DIALOG(dialog));
+    ProcessingType proc_type = PROC_HISTOGRAM;
+    
+    if (response == GTK_RESPONSE_OK) {
+        if (gtk_check_button_get_active(GTK_CHECK_BUTTON(radio_color))) {
+            proc_type = PROC_COLOR_CLASSIFICATION;
+        } else if (gtk_check_button_get_active(GTK_CHECK_BUTTON(radio_both))) {
+            proc_type = PROC_BOTH;
+        }
+        
+        gtk_window_destroy(GTK_WINDOW(dialog));
+        
+        // Create send dialog data
+        SendDialogData dialog_data;
+        dialog_data.proc_type = proc_type;
+        dialog_data.image_list = app_data->loaded_images;
+        
+        // Create progress dialog
+        GtkWidget *progress_dialog = gtk_window_new();
+        gtk_window_set_title(GTK_WINDOW(progress_dialog), "Sending Images");
+        gtk_window_set_default_size(GTK_WINDOW(progress_dialog), 400, 150);
+        gtk_window_set_transient_for(GTK_WINDOW(progress_dialog), 
+                                     GTK_WINDOW(app_data->window));
+        gtk_window_set_modal(GTK_WINDOW(progress_dialog), TRUE);
+        
+        GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+        gtk_widget_set_margin_start(vbox, 20);
+        gtk_widget_set_margin_end(vbox, 20);
+        gtk_widget_set_margin_top(vbox, 20);
+        gtk_widget_set_margin_bottom(vbox, 20);
+        
+        dialog_data.label = gtk_label_new("Connecting to server...");
+        gtk_box_append(GTK_BOX(vbox), dialog_data.label);
+        
+        dialog_data.progress_bar = gtk_progress_bar_new();
+        gtk_box_append(GTK_BOX(vbox), dialog_data.progress_bar);
+        
+        gtk_window_set_child(GTK_WINDOW(progress_dialog), vbox);
+        gtk_window_present(GTK_WINDOW(progress_dialog));
+        
+        // Run send in thread
+        GThread *thread = g_thread_new("send", send_thread_func, &dialog_data);
+        
+        // Wait for thread while updating UI
+        while (!g_thread_join(thread)) {
+            while (gtk_events_pending()) {
+                gtk_main_iteration();
+            }
+        }
+        
+        gtk_window_destroy(GTK_WINDOW(progress_dialog));
+        
         show_message_dialog(GTK_WINDOW(app_data->window), 
-                           "Send Images", 
-                           "Image sending functionality will be implemented soon!");
+                           "Transfer Complete", 
+                           "Image transfer finished!");
+        
+    } else {
+        gtk_window_destroy(GTK_WINDOW(dialog));
     }
 }
 
