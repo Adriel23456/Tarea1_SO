@@ -232,7 +232,6 @@ void on_exit_button_clicked(GtkWidget *button, gpointer user_data) {
  * Add an image to the list display
  */
 void add_image_to_list(AppData *app_data, const char *filepath) {
-    GtkWidget *row;
     GtkWidget *row_box;
     GtkWidget *label;
     GtkWidget *size_label;
