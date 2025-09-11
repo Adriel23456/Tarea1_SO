@@ -1,77 +1,72 @@
 # Image Processing Client
 
-A modern GTK4-based client application for the Image Processing Server daemon. This client provides a clean, efficient interface for loading, managing, and sending images to the server for processing.
+A modern GTK4-based client application for the Image Processing Server daemon. This client provides a clean, efficient interface for loading, managing, and **sending images over the network (TCP / HTTP-like framing)** to the server for processing.
 
 ## Features
 
 - **Modern GTK4 Interface**: Clean and responsive UI with modern design elements
 - **Image Management**: Load and manage multiple images (jpg, jpeg, png, gif)
 - **Server Configuration**: Easy-to-edit JSON configuration for server connection
-- **Batch Processing**: Queue multiple images for processing
-- **Scrollable Lists**: Efficient handling of large image collections
-- **File Size Display**: Shows file sizes for loaded images
+- **Sequential Upload**: Sends images **one at a time**, in the order they were loaded
+- **Chunked Transfer**: Configurable chunk size for robust transfers over TCP
+- **Processing Headers**: Sends processing intent (histogram / color_classification / both)
+- **Retries & Timeouts**: Connection retry policy and timeout settings
+- **Progress Feedback**: Live text progress messages during upload
 
 ## Prerequisites
 
-- Linux-based operating system (Ubuntu, Debian, Fedora, etc.)
+- Linux-based operating system (Ubuntu, Debian, Fedora, Arch, etc.)
+- GCC, pkg-config
 - GTK4 development libraries
-- GCC compiler
-- pkg-config
+- **json-c**, **uuid**, **OpenSSL (client-side TLS optional)**
+
+### Packages
+
+**Ubuntu/Debian**
+```bash
+sudo apt update
+sudo apt install -y build-essential pkg-config libgtk-4-dev libjson-c-dev libssl-dev uuid-dev
+````
+
+**Fedora**
+
+```bash
+sudo dnf install -y gcc gtk4-devel pkg-config json-c-devel openssl-devel libuuid-devel
+```
+
+**Arch**
+
+```bash
+sudo pacman -S --noconfirm base-devel gtk4 pkg-config json-c openssl util-linux-libs
+```
+
+> ⚠️ The server currently listens on **plain TCP** (no TLS). The client supports `"protocol": "https"`, but **use `"http"` for now** until server-side TLS is added.
 
 ## Installation
 
-### Install Dependencies
-
-For Ubuntu/Debian-based systems:
+### Quick Setup
 
 ```bash
-sudo apt update
-sudo apt install build-essential pkg-config libgtk-4-dev
-```
+# Install deps (Ubuntu/Debian shortcut)
+make install-deps
 
-For Fedora:
-
-```bash
-sudo dnf install gcc gtk4-devel pkg-config
-```
-
-For Arch Linux:
-
-```bash
-sudo pacman -S base-devel gtk4 pkg-config
-```
-
-## Build Instructions
-
-### Quick Build
-
-1. Clone or download the project
-2. Navigate to the project directory
-3. Run the following commands:
-
-```bash
-# Create necessary directories and default files
+# Create assets and default files (non-destructive)
 make setup
 
-# Build the application
+# Build
 make
 
-# Run the application
+# Run
 ./image-client
 ```
 
-### Alternative Build (without Makefile)
-
-If you prefer to compile manually:
+### Manual Build (without Makefile)
 
 ```bash
-# Create assets directory
 mkdir -p assets
-
-# Compile all source files
-gcc src/main.c src/gui.c src/dialogs.c `pkg-config --cflags --libs gtk4` -o image-client
-
-# Run the application
+gcc src/main.c src/gui.c src/dialogs.c src/network.c \
+    `pkg-config --cflags --libs gtk4 json-c` -luuid -lssl -lcrypto \
+    -Wall -Wextra -g -o image-client
 ./image-client
 ```
 
@@ -84,31 +79,20 @@ image-client/
 │   ├── gui.c            # Main GUI implementation
 │   ├── gui.h            # GUI header file
 │   ├── dialogs.c        # Dialog implementations
-│   └── dialogs.h        # Dialog headers
+│   ├── dialogs.h        # Dialog headers
+│   ├── network.c        # Network (TCP) implementation + optional TLS client
+│   └── network.h        # Network interface + NetConfig
 ├── assets/
-│   ├── connection.json  # Server configuration
+│   ├── connection.json  # Client & server connection config
 │   └── credits.txt      # Application credits
-├── Makefile             # Build configuration
-└── README.md            # This file
+├── Makefile
+└── README.md
 ```
 
-## Usage
+## Configuration
 
-### Loading Images
+`assets/connection.json` (created by `make setup` if missing):
 
-1. Click the **Load** button to open the file selector
-2. Choose an image file (jpg, jpeg, png, or gif)
-3. The image will appear in the list with its file size
-4. Repeat to add multiple images
-
-### Configuring Server Connection
-
-1. Click the **Configuration** button
-2. Edit the JSON configuration in the text editor
-3. Click **Save** to apply changes
-4. Configuration is stored in `assets/connection.json`
-
-Default configuration:
 ```json
 {
   "server": {
@@ -117,104 +101,92 @@ Default configuration:
     "protocol": "http"
   },
   "client": {
-    "timeout": 30,
-    "max_retries": 3
+    "chunk_size": 65536,
+    "connect_timeout": 10,
+    "max_retries": 3,
+    "retry_backoff_ms": 500
   }
 }
 ```
 
+You can edit it directly from the app: **Configuration → Save**.
+
+## Usage
+
+### Loading Images
+
+1. Click **Load** to select one or more images (jpg, jpeg, png, gif).
+2. They’ll appear in the list with their file sizes.
+
 ### Sending Images
 
-1. Load one or more images
-2. Click **Send Images** to process the queue
-3. Images will be sent to the configured server
+1. Click **Send Images**.
+2. Select processing type:
 
-### Viewing Credits
+   * **Histogram Equalization**
+   * **Color Classification**
+   * **Both**
+3. The client connects to the server, performs a handshake (server issues a UUID), and uploads the image in **binary chunks**.
+4. After completion, the client notifies the server with the **image format** (jpg/png/jpeg/gif).
 
-Click the **Credits** button to view application information and credits.
+> Images are sent **sequentially**: one completes before the next begins.
 
-### Exiting the Application
+### Credits
 
-Click the **Exit** button or close the window to quit the application.
+Click **Credits**.
+
+### Exit
+
+Click **Exit** or close the window.
+
+## Wire Protocol (overview)
+
+All messages have a fixed header:
+
+```c
+typedef struct {
+  uint8_t  type;        // MessageType
+  uint32_t length;      // payload length (network order)
+  char     image_id[37];// UUID string or "" (null-terminated)
+} MessageHeader;
+```
+
+Main flow per image:
+
+1. **Client → Server**: `MSG_HELLO`
+2. **Server → Client**: `MSG_IMAGE_ID_RESPONSE` (header.image\_id = UUID)
+3. **Client → Server**: `MSG_IMAGE_INFO` (filename, total\_size, total\_chunks, processing\_type, format)
+4. **Client → Server**: multiple `MSG_IMAGE_CHUNK` with raw bytes
+5. **Client → Server**: `MSG_IMAGE_COMPLETE` (payload = `"jpg"`/`"png"`/`"jpeg"`/`"gif"`)
+
+TCP guarantees order & integrity; no per-chunk ACK necessary.
 
 ## Makefile Targets
 
-The project includes a comprehensive Makefile with the following targets:
-
-- `make` - Build the application
-- `make run` - Build and run the application
-- `make clean` - Remove build files
-- `make setup` - Create assets directory and default configuration files
-- `make rebuild` - Clean, setup, and build from scratch
-- `make install-deps` - Install GTK4 dependencies (Ubuntu/Debian)
-- `make help` - Show all available targets
-
-## Development Notes
-
-### Adding New Features
-
-1. GUI components are in `gui.c` and `gui.h`
-2. Dialog windows are in `dialogs.c` and `dialogs.h`
-3. The main window layout is created in `create_main_window()`
-4. Button callbacks follow the pattern `on_[button]_button_clicked()`
-
-### Styling
-
-The application uses GTK4's CSS styling capabilities. Custom CSS is applied in `gui.c` to enhance the visual appearance with:
-- Rounded corners on lists
-- Hover effects on list items
-- Modern button styling with suggested and destructive actions
-
-### Image Processing Flow
-
-1. Images are loaded into memory with metadata
-2. File paths are stored in a linked list (`GSList`)
-3. When sending, images are processed in order of file size (smallest first)
-4. Binary data extraction and reconstruction will be handled by the server communication module
+* `make` – Build the app
+* `make run` – Build and run
+* `make clean` – Remove build files
+* `make setup` – Create assets & defaults (non-destructive)
+* `make rebuild` – Clean + setup + build
+* `make install-deps` – Install dependencies (Ubuntu/Debian)
+* `make help` – Show targets
 
 ## Troubleshooting
 
-### GTK4 Not Found
+* **Connection failed**: Ensure the server is running on `host:port` and `protocol` is `"http"` (for now).
+* **TLS handshake mismatch**: If the server has no TLS, use `"protocol": "http"`.
+* **Undefined references to SSL/uuid**: Install `libssl-dev` and `uuid-dev` and ensure `-lssl -lcrypto -luuid` in the Makefile.
+* **GTK errors**: `pkg-config --modversion gtk4` must return a valid version.
 
-If you get an error about GTK4 not being found:
-```bash
-# Check if GTK4 is installed
-pkg-config --modversion gtk4
+## Roadmap
 
-# If not installed, run:
-make install-deps
-```
-
-### Permission Denied
-
-If you get permission errors:
-```bash
-# Make the binary executable
-chmod +x image-client
-```
-
-### Missing Assets Directory
-
-If the assets directory is missing:
-```bash
-make setup
-```
-
-## Future Enhancements
-
-- [ ] Network communication module for server interaction
-- [ ] Image preview thumbnails in the list
-- [ ] Drag-and-drop support for adding images
-- [ ] Progress indicators for image uploads
-- [ ] Result viewing after server processing
-- [ ] Multi-select for batch operations
-- [ ] Image format validation before sending
-- [ ] Connection status indicator
+* [ ] Server-side TLS for `"https"` end-to-end
+* [ ] Keep-alive single connection for multiple images
+* [ ] Final ACK after `IMAGE_COMPLETE`
+* [ ] Image preview thumbnails
+* [ ] Drag & drop
+* [ ] Result viewer (server-processed outputs)
 
 ## License
 
-This project is developed for the Systems Operations course. All rights reserved.
-
-## Support
-
-For issues, questions, or contributions, please refer to the course documentation or contact the development team.
+Developed for the Systems Operations course. All rights reserved.
