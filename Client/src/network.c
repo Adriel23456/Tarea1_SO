@@ -260,7 +260,7 @@ static int send_one_image(const char* filepath,
     strncpy(info.filename, base, sizeof(info.filename)-1);
     info.total_size   = to_be32((uint32_t)total_size_l);
     info.total_chunks = to_be32(total_chunks);
-    info.processing_type = (uint8_t)proc_type;
+    info.processing_type = (ProcessingType)info.processing_type;
     strncpy(info.format, ext_from_filename(filepath), sizeof(info.format)-1);
 
     if (send_message(&ns, MSG_IMAGE_INFO, image_id, &info, sizeof(info)) != 0) {

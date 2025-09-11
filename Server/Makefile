@@ -1,14 +1,31 @@
-# Makefile
+# Makefile for refactored image server
 CC = gcc
 CFLAGS = -Wall -Wextra -O2 -g
 LIBS = -luuid -lssl -lcrypto -lpthread -ljson-c -lm
 
 SRCDIR = src
-SOURCES = $(SRCDIR)/main.c
-OBJECTS = $(SOURCES:.c=.o)
+OBJDIR = obj
+
+# Source files
+SOURCES = $(SRCDIR)/main.c \
+          $(SRCDIR)/config.c \
+          $(SRCDIR)/logging.c \
+          $(SRCDIR)/connection.c \
+          $(SRCDIR)/utils.c \
+          $(SRCDIR)/image_processing.c \
+          $(SRCDIR)/gif_processing.c \
+          $(SRCDIR)/server.c
+
+# Object files
+OBJECTS = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SOURCES))
+
 TARGET = image-server
 
-all: check-stb check-gif $(TARGET)
+all: check-stb check-gif $(OBJDIR) $(TARGET)
+
+# Create object directory
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
 
 check-stb:
 	@if [ ! -f $(SRCDIR)/stb_image.h ] || [ ! -f $(SRCDIR)/stb_image_write.h ]; then \
@@ -17,7 +34,6 @@ check-stb:
 		./download_stb.sh; \
 	fi
 
-# NUEVO: bajar gif.h si no está presente
 check-gif:
 	@if [ ! -f $(SRCDIR)/gif.h ]; then \
 		echo "gif.h not found. Running download script..."; \
@@ -29,11 +45,11 @@ $(TARGET): $(OBJECTS)
 	$(CC) $(OBJECTS) -o $(TARGET) $(LIBS)
 	@echo "Build complete! Run with: ./$(TARGET)"
 
-$(SRCDIR)/%.o: $(SRCDIR)/%.c
+$(OBJDIR)/%.o: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJECTS) $(TARGET)
+	rm -rf $(OBJDIR) $(TARGET)
 	@echo "Clean complete"
 
 clean-all: clean
