@@ -2,8 +2,8 @@
 # Compiler and flags configuration
 
 CC = gcc
-CFLAGS = `pkg-config --cflags gtk4` -Wall -Wextra -g
-LIBS = `pkg-config --libs gtk4` -ljson-c
+CFLAGS = `pkg-config --cflags gtk4 json-c` -Wall -Wextra -g
+LIBS = `pkg-config --libs gtk4 json-c`
 
 # Source files
 SRCDIR = src

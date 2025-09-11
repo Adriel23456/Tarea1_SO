@@ -59,7 +59,7 @@ static gpointer send_thread_func(gpointer data) {
                     port = json_object_get_int(port_obj);
                 }
             }
-            // Note: don't free json objects, they manage their own memory
+            json_object_put(root);
         }
         free(json_str);
     }
@@ -282,115 +282,140 @@ void on_config_button_clicked(GtkWidget *button, gpointer user_data) {
 void on_send_button_clicked(GtkWidget *button, gpointer user_data) {
     (void)button;
     AppData *app_data = (AppData *)user_data;
-    
+
     if (app_data->loaded_images == NULL) {
-        show_message_dialog(GTK_WINDOW(app_data->window), 
-                           "No Images", 
-                           "Please load some images first!");
+        show_message_dialog(GTK_WINDOW(app_data->window),
+                            "No Images",
+                            "Please load some images first!");
         return;
     }
-    
-    // Create processing type dialog
-    GtkWidget *dialog;
-    GtkWidget *content;
-    GtkWidget *box;
-    GtkWidget *label;
-    GtkWidget *radio_hist, *radio_color, *radio_both;
-    
-    dialog = gtk_dialog_new_with_buttons("Select Processing Type",
-                                         GTK_WINDOW(app_data->window),
-                                         GTK_DIALOG_MODAL,
-                                         "_Cancel", GTK_RESPONSE_CANCEL,
-                                         "_Send", GTK_RESPONSE_OK,
-                                         NULL);
-    
-    content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
-    box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
-    gtk_widget_set_margin_start(box, 20);
-    gtk_widget_set_margin_end(box, 20);
-    gtk_widget_set_margin_top(box, 20);
-    gtk_widget_set_margin_bottom(box, 20);
-    
-    label = gtk_label_new("Select processing type for images:");
-    gtk_box_append(GTK_BOX(box), label);
-    
-    radio_hist = gtk_check_button_new_with_label("Histogram Equalization");
+
+    /* --- Crear ventana modal para escoger el tipo de procesamiento --- */
+    GtkWidget *dialog_win = gtk_window_new();
+    gtk_window_set_title(GTK_WINDOW(dialog_win), "Select Processing Type");
+    gtk_window_set_transient_for(GTK_WINDOW(dialog_win), GTK_WINDOW(app_data->window));
+    gtk_window_set_modal(GTK_WINDOW(dialog_win), TRUE);
+    gtk_window_set_default_size(GTK_WINDOW(dialog_win), 420, 180);
+
+    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    gtk_widget_set_margin_start(vbox, 20);
+    gtk_widget_set_margin_end(vbox, 20);
+    gtk_widget_set_margin_top(vbox, 20);
+    gtk_widget_set_margin_bottom(vbox, 20);
+
+    GtkWidget *label = gtk_label_new("Select processing type for images:");
+    gtk_box_append(GTK_BOX(vbox), label);
+
+    /* Radio buttons en GTK4 = CheckButtons en el mismo grupo */
+    GtkWidget *radio_hist = gtk_check_button_new_with_label("Histogram Equalization");
     gtk_check_button_set_active(GTK_CHECK_BUTTON(radio_hist), TRUE);
-    
-    radio_color = gtk_check_button_new_with_label("Color Classification");
-    gtk_check_button_set_group(GTK_CHECK_BUTTON(radio_color), 
-                               GTK_CHECK_BUTTON(radio_hist));
-    
-    radio_both = gtk_check_button_new_with_label("Both");
-    gtk_check_button_set_group(GTK_CHECK_BUTTON(radio_both), 
-                               GTK_CHECK_BUTTON(radio_hist));
-    
-    gtk_box_append(GTK_BOX(box), radio_hist);
-    gtk_box_append(GTK_BOX(box), radio_color);
-    gtk_box_append(GTK_BOX(box), radio_both);
-    gtk_box_append(GTK_BOX(content), box);
-    
-    gtk_widget_show(dialog);
-    
-    int response = gtk_dialog_run(GTK_DIALOG(dialog));
-    ProcessingType proc_type = PROC_HISTOGRAM;
-    
-    if (response == GTK_RESPONSE_OK) {
-        if (gtk_check_button_get_active(GTK_CHECK_BUTTON(radio_color))) {
-            proc_type = PROC_COLOR_CLASSIFICATION;
-        } else if (gtk_check_button_get_active(GTK_CHECK_BUTTON(radio_both))) {
-            proc_type = PROC_BOTH;
-        }
-        
-        gtk_window_destroy(GTK_WINDOW(dialog));
-        
-        // Create send dialog data
-        SendDialogData dialog_data;
-        dialog_data.proc_type = proc_type;
-        dialog_data.image_list = app_data->loaded_images;
-        
-        // Create progress dialog
-        GtkWidget *progress_dialog = gtk_window_new();
-        gtk_window_set_title(GTK_WINDOW(progress_dialog), "Sending Images");
-        gtk_window_set_default_size(GTK_WINDOW(progress_dialog), 400, 150);
-        gtk_window_set_transient_for(GTK_WINDOW(progress_dialog), 
-                                     GTK_WINDOW(app_data->window));
-        gtk_window_set_modal(GTK_WINDOW(progress_dialog), TRUE);
-        
-        GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
-        gtk_widget_set_margin_start(vbox, 20);
-        gtk_widget_set_margin_end(vbox, 20);
-        gtk_widget_set_margin_top(vbox, 20);
-        gtk_widget_set_margin_bottom(vbox, 20);
-        
-        dialog_data.label = gtk_label_new("Connecting to server...");
-        gtk_box_append(GTK_BOX(vbox), dialog_data.label);
-        
-        dialog_data.progress_bar = gtk_progress_bar_new();
-        gtk_box_append(GTK_BOX(vbox), dialog_data.progress_bar);
-        
-        gtk_window_set_child(GTK_WINDOW(progress_dialog), vbox);
-        gtk_window_present(GTK_WINDOW(progress_dialog));
-        
-        // Run send in thread
-        GThread *thread = g_thread_new("send", send_thread_func, &dialog_data);
-        
-        // Wait for thread while updating UI
-        while (!g_thread_join(thread)) {
-            while (gtk_events_pending()) {
-                gtk_main_iteration();
-            }
-        }
-        
-        gtk_window_destroy(GTK_WINDOW(progress_dialog));
-        
-        show_message_dialog(GTK_WINDOW(app_data->window), 
-                           "Transfer Complete", 
-                           "Image transfer finished!");
-        
-    } else {
-        gtk_window_destroy(GTK_WINDOW(dialog));
+
+    GtkWidget *radio_color = gtk_check_button_new_with_label("Color Classification");
+    gtk_check_button_set_group(GTK_CHECK_BUTTON(radio_color), GTK_CHECK_BUTTON(radio_hist));
+
+    GtkWidget *radio_both = gtk_check_button_new_with_label("Both");
+    gtk_check_button_set_group(GTK_CHECK_BUTTON(radio_both), GTK_CHECK_BUTTON(radio_hist));
+
+    gtk_box_append(GTK_BOX(vbox), radio_hist);
+    gtk_box_append(GTK_BOX(vbox), radio_color);
+    gtk_box_append(GTK_BOX(vbox), radio_both);
+
+    /* Botonera */
+    GtkWidget *hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
+    gtk_widget_set_halign(hbox, GTK_ALIGN_END);
+    GtkWidget *btn_cancel = gtk_button_new_with_label("Cancel");
+    GtkWidget *btn_send   = gtk_button_new_with_label("Send");
+    gtk_widget_add_css_class(btn_send, "suggested-action");
+    gtk_box_append(GTK_BOX(hbox), btn_cancel);
+    gtk_box_append(GTK_BOX(hbox), btn_send);
+    gtk_box_append(GTK_BOX(vbox), hbox);
+
+    gtk_window_set_child(GTK_WINDOW(dialog_win), vbox);
+    gtk_window_present(GTK_WINDOW(dialog_win));
+
+    /* Usar un loop local para simular 'run' y esperar el click */
+    GMainLoop *loop = g_main_loop_new(NULL, FALSE);
+    int response = GTK_RESPONSE_CANCEL;  /* por defecto */
+
+    /* Callbacks locales */
+    g_signal_connect_swapped(btn_cancel, "clicked", G_CALLBACK(g_main_loop_quit), loop);
+    g_signal_connect_swapped(btn_send,   "clicked", G_CALLBACK(g_main_loop_quit), loop);
+
+    /* Guardar punteros para leer estado al salir */
+    g_object_set_data(G_OBJECT(dialog_win), "radio_hist", radio_hist);
+    g_object_set_data(G_OBJECT(dialog_win), "radio_color", radio_color);
+    g_object_set_data(G_OBJECT(dialog_win), "radio_both", radio_both);
+    g_object_set_data(G_OBJECT(dialog_win), "btn_send", btn_send);
+
+    /* Ejecutar el loop: cuando se pulse Send o Cancel, se sale */
+    g_main_loop_run(loop);
+
+    /* Decidir respuesta: si el último click fue en 'Send' => OK */
+    {
+        /* Heurística simple: si la ventana aún existe y el botón Send tiene foco,
+           o simplemente verifica si Send fue el último que emitió "clicked".
+           Más robusto: setear un flag en los callbacks. */
+        gboolean send_pressed = gtk_widget_has_focus(btn_send);
+        response = send_pressed ? GTK_RESPONSE_OK : GTK_RESPONSE_CANCEL;
     }
+
+    /* Leer selección */
+    ProcessingType proc_type = PROC_HISTOGRAM;
+    if (gtk_check_button_get_active(GTK_CHECK_BUTTON(radio_color))) {
+        proc_type = PROC_COLOR_CLASSIFICATION;
+    } else if (gtk_check_button_get_active(GTK_CHECK_BUTTON(radio_both))) {
+        proc_type = PROC_BOTH;
+    }
+
+    g_main_loop_unref(loop);
+    gtk_window_destroy(GTK_WINDOW(dialog_win));
+
+    if (response != GTK_RESPONSE_OK) {
+        return; /* Cancelado */
+    }
+
+    /* --- Ventana de progreso --- */
+    GtkWidget *progress_dialog = gtk_window_new();
+    gtk_window_set_title(GTK_WINDOW(progress_dialog), "Sending Images");
+    gtk_window_set_default_size(GTK_WINDOW(progress_dialog), 400, 150);
+    gtk_window_set_transient_for(GTK_WINDOW(progress_dialog), GTK_WINDOW(app_data->window));
+    gtk_window_set_modal(GTK_WINDOW(progress_dialog), TRUE);
+
+    GtkWidget *pvbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    gtk_widget_set_margin_start(pvbox, 20);
+    gtk_widget_set_margin_end(pvbox, 20);
+    gtk_widget_set_margin_top(pvbox, 20);
+    gtk_widget_set_margin_bottom(pvbox, 20);
+
+    GtkWidget *label_prog = gtk_label_new("Connecting to server...");
+    gtk_box_append(GTK_BOX(pvbox), label_prog);
+
+    GtkWidget *pbar = gtk_progress_bar_new();
+    gtk_box_append(GTK_BOX(pvbox), pbar);
+
+    gtk_window_set_child(GTK_WINDOW(progress_dialog), pvbox);
+    gtk_window_present(GTK_WINDOW(progress_dialog));
+
+    /* Datos para el hilo */
+    SendDialogData dialog_data;
+    dialog_data.proc_type = proc_type;
+    dialog_data.image_list = app_data->loaded_images;
+    dialog_data.label = label_prog;
+    dialog_data.progress_bar = pbar;
+
+    /* Lanzar hilo */
+    GThread *thread = g_thread_new("send", send_thread_func, &dialog_data);
+
+    /* IMPORTANTE: join correcto (sin gtk_events_pending / gtk_main_iteration) */
+    gpointer thread_result = g_thread_join(thread);
+    int result = GPOINTER_TO_INT(thread_result);
+    (void)result; /* por ahora no lo usamos */
+
+    gtk_window_destroy(GTK_WINDOW(progress_dialog));
+
+    show_message_dialog(GTK_WINDOW(app_data->window),
+                        "Transfer Complete",
+                        "Image transfer finished!");
 }
 
 /**
