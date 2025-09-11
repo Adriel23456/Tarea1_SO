@@ -1,0 +1,23 @@
+{
+  "server": {
+    "host": "localhost",
+    "port": 1717,
+    "protocol": "http",
+    "api_version": "v1"
+  },
+  "client": {
+    "timeout": 30,
+    "max_retries": 3,
+    "chunk_size": 8192,
+    "max_concurrent": 5
+  },
+  "processing": {
+    "histogram_equalization": true,
+    "color_classification": true,
+    "priority": "size_ascending"
+  },
+  "paths": {
+    "temp_directory": "/tmp/image-client",
+    "log_file": "/tmp/image-client.log"
+  }
+}
