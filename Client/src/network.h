@@ -8,14 +8,15 @@
 typedef void (*ProgressCallback)(const char* message, double progress);
 
 // Config leída de assets/connection.json
+// Ahora con buffers PROPIOS (no punteros a json-c) para evitar uso de memoria liberada.
 typedef struct {
-    const char* host;
-    int         port;
-    const char* protocol;          // "http" o "https" (https requiere server TLS)
-    int         chunk_size;        // bytes por chunk
-    int         connect_timeout;   // seg
-    int         max_retries;       // reintentos para conectar
-    int         retry_backoff_ms;  // ms entre reintentos
+    char host[256];
+    int  port;
+    char protocol[16];         // "http" o "https"
+    int  chunk_size;           // bytes por chunk
+    int  connect_timeout;      // seg
+    int  max_retries;          // reintentos para conectar
+    int  retry_backoff_ms;     // ms
 } NetConfig;
 
 // Envía todas las imágenes secuencialmente (UNA A LA VEZ)

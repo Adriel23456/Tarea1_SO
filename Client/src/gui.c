@@ -27,20 +27,20 @@ static void send_progress_callback(const char* message, double progress) {
     printf("%s (%.0f%%)\n", message, progress * 100);
 }
 
-// --- NUEVA VERSION ---
+// NO SE JAJA
 static gpointer send_thread_func(gpointer data) {
     SendDialogData *dialog_data = (SendDialogData*)data;
 
-    // Config por defecto
-    NetConfig cfg = {
-        .host = "localhost",
-        .port = DEFAULT_PORT,
-        .protocol = "http",
-        .chunk_size = DEFAULT_CHUNK_SIZE,
-        .connect_timeout = 10,
-        .max_retries = 3,
-        .retry_backoff_ms = 500
-    };
+    // Config por defecto con buffers propios
+    NetConfig cfg;
+    memset(&cfg, 0, sizeof(cfg));
+    g_strlcpy(cfg.host, "localhost", sizeof(cfg.host));
+    cfg.port = DEFAULT_PORT;
+    g_strlcpy(cfg.protocol, "http", sizeof(cfg.protocol));
+    cfg.chunk_size = DEFAULT_CHUNK_SIZE;
+    cfg.connect_timeout = 10;
+    cfg.max_retries = 3;
+    cfg.retry_backoff_ms = 500;
 
     // Leer assets/connection.json
     FILE* fp = fopen("assets/connection.json", "r");
@@ -49,37 +49,46 @@ static gpointer send_thread_func(gpointer data) {
         long size = ftell(fp);
         fseek(fp, 0, SEEK_SET);
 
-        char* json_str = malloc(size + 1);
-        fread(json_str, 1, size, fp);
-        json_str[size] = '\0';
-        fclose(fp);
+        char* json_str = (char*)malloc((size_t)size + 1);
+        if (json_str) {
+            size_t rd = fread(json_str, 1, (size_t)size, fp);
+            json_str[rd] = '\0';
+            struct json_object* root = json_tokener_parse(json_str);
+            if (root) {
+                struct json_object *server_obj = NULL, *client_obj = NULL;
 
-        struct json_object* root = json_tokener_parse(json_str);
-        if (root) {
-            struct json_object *server_obj, *client_obj;
-            if (json_object_object_get_ex(root, "server", &server_obj)) {
-                struct json_object *host_obj, *port_obj, *proto_obj;
-                if (json_object_object_get_ex(server_obj, "host", &host_obj))
-                    cfg.host = json_object_get_string(host_obj);
-                if (json_object_object_get_ex(server_obj, "port", &port_obj))
-                    cfg.port = json_object_get_int(port_obj);
-                if (json_object_object_get_ex(server_obj, "protocol", &proto_obj))
-                    cfg.protocol = json_object_get_string(proto_obj);
+                if (json_object_object_get_ex(root, "server", &server_obj)) {
+                    struct json_object *host_obj=NULL, *port_obj=NULL, *proto_obj=NULL;
+                    if (json_object_object_get_ex(server_obj, "host", &host_obj)) {
+                        const char* s = json_object_get_string(host_obj);
+                        if (s) g_strlcpy(cfg.host, s, sizeof(cfg.host));
+                    }
+                    if (json_object_object_get_ex(server_obj, "port", &port_obj)) {
+                        cfg.port = json_object_get_int(port_obj);
+                    }
+                    if (json_object_object_get_ex(server_obj, "protocol", &proto_obj)) {
+                        const char* s = json_object_get_string(proto_obj);
+                        if (s) g_strlcpy(cfg.protocol, s, sizeof(cfg.protocol));
+                    }
+                }
+
+                if (json_object_object_get_ex(root, "client", &client_obj)) {
+                    struct json_object *chunk_obj=NULL, *cto_obj=NULL, *mr_obj=NULL, *rb_obj=NULL;
+                    if (json_object_object_get_ex(client_obj, "chunk_size", &chunk_obj))
+                        cfg.chunk_size = json_object_get_int(chunk_obj);
+                    if (json_object_object_get_ex(client_obj, "connect_timeout", &cto_obj))
+                        cfg.connect_timeout = json_object_get_int(cto_obj);
+                    if (json_object_object_get_ex(client_obj, "max_retries", &mr_obj))
+                        cfg.max_retries = json_object_get_int(mr_obj);
+                    if (json_object_object_get_ex(client_obj, "retry_backoff_ms", &rb_obj))
+                        cfg.retry_backoff_ms = json_object_get_int(rb_obj);
+                }
+
+                json_object_put(root);
             }
-            if (json_object_object_get_ex(root, "client", &client_obj)) {
-                struct json_object *chunk_obj, *cto_obj, *mr_obj, *rb_obj;
-                if (json_object_object_get_ex(client_obj, "chunk_size", &chunk_obj))
-                    cfg.chunk_size = json_object_get_int(chunk_obj);
-                if (json_object_object_get_ex(client_obj, "connect_timeout", &cto_obj))
-                    cfg.connect_timeout = json_object_get_int(cto_obj);
-                if (json_object_object_get_ex(client_obj, "max_retries", &mr_obj))
-                    cfg.max_retries = json_object_get_int(mr_obj);
-                if (json_object_object_get_ex(client_obj, "retry_backoff_ms", &rb_obj))
-                    cfg.retry_backoff_ms = json_object_get_int(rb_obj);
-            }
-            json_object_put(root);
+            free(json_str);
         }
-        free(json_str);
+        fclose(fp);
     }
 
     int result = send_all_images(dialog_data->image_list, &cfg,

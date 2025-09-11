@@ -1,14 +1,27 @@
-// Servidor TCP/TLS concurrente que recibe imágenes por nuestro protocolo.
-// Guarda cada imagen en assets/incoming/<uuid>_<filename>
-// y escribe eventos en assets/log.txt
+// Concurrent TCP/TLS image server with final ACK, TLS (OpenSSL), and thread-per-connection.
+// Saves to assets/incoming/<uuid>_<filename> and logs to the configured log file.
 //
-// Cambios pedidos e implementados en este archivo:
-// 1) ACK final (MSG_ACK) después de recibir MSG_IMAGE_COMPLETE
-// 2) TLS del lado del servidor mediante OpenSSL (habilitable con --tls o SERVER_TLS=1)
-// 3) Concurrencia multi-cliente (un hilo por conexión con pthreads)
+// New: reads server configuration from assets/config.json (all in English):
+// {
+//   "server": {
+//     "port": 1717,
+//     "tls_enabled": 1,
+//     "tls_dir": "assets/tls"
+//   },
+//   "paths": {
+//     "log_file": "assets/log.txt",
+//     "incoming_dir": "assets/incoming",
+//     "histogram_dir": "assets/histogram",
+//     "colors_dir": {
+//       "red": "assets/colors/red",
+//       "green": "assets/colors/green",
+//       "blue": "assets/colors/blue"
+//     }
+//   }
+// }
 //
-// Compilar linkeando uuid, pthread y OpenSSL (Makefile ya actualizado):
-//   LIBS = -luuid -lssl -lcrypto -lpthread
+// Build (Makefile updated):
+//   LIBS = -luuid -lssl -lcrypto -lpthread -ljson-c
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,27 +35,39 @@
 #include <sys/stat.h>
 #include <stdarg.h>
 #include <pthread.h>
+#include <libgen.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <json-c/json.h>
 #include "protocol.h"
 
-#define LISTEN_PORT DEFAULT_PORT
 #define BACKLOG 10
 
-// --- Logging ---
+// -------- Config structure --------
+typedef struct {
+    int   port;
+    int   tls_enabled;     // 1 or 0
+    char  tls_dir[512];    // e.g., assets/tls
+    char  log_file[512];   // e.g., assets/log.txt
+    char  incoming_dir[512];
+    char  histogram_dir[512];
+    char  colors_red[512];
+    char  colors_green[512];
+    char  colors_blue[512];
+} ServerConfig;
+
+static ServerConfig g_cfg;
+
+// -------- Logging --------
 static FILE* g_log = NULL;
 static pthread_mutex_t g_log_mtx = PTHREAD_MUTEX_INITIALIZER;
 
-// --- TLS globals ---
-static int g_tls_enabled = 0;
+// -------- TLS globals --------
 static SSL_CTX* g_ssl_ctx = NULL;
 
-// --- Utilidades / FS ---
-static void ensure_dirs(void) {
-    mkdir("assets", 0755);
-    mkdir("assets/incoming", 0755);
-    mkdir("assets/tls", 0755); // por si el usuario coloca ahí server.crt y server.key
-}
+// -------- Utilities --------
+static uint32_t to_be32_s(uint32_t v)   { return htonl(v); }
+static uint32_t from_be32_s(uint32_t v) { return ntohl(v); }
 
 static void log_line(const char* fmt, ...) {
     if (!g_log) return;
@@ -66,19 +91,158 @@ static void log_line(const char* fmt, ...) {
     pthread_mutex_unlock(&g_log_mtx);
 }
 
-// --- Conexión abstracta (plain o TLS) ---
+static int mkdir_p(const char* path, mode_t mode) {
+    // Create all components of 'path' (like `mkdir -p`).
+    if (!path || !*path) return -1;
+
+    char tmp[1024];
+    strncpy(tmp, path, sizeof(tmp)-1);
+    tmp[sizeof(tmp)-1] = '\0';
+
+    // If ends with '/', remove it (except root "/")
+    size_t len = strlen(tmp);
+    if (len > 1 && tmp[len-1] == '/') tmp[len-1] = '\0';
+
+    for (char* p = tmp + 1; *p; ++p) {
+        if (*p == '/') {
+            *p = '\0';
+            if (mkdir(tmp, mode) != 0 && errno != EEXIST) return -1;
+            *p = '/';
+        }
+    }
+    if (mkdir(tmp, mode) != 0 && errno != EEXIST) return -1;
+    return 0;
+}
+
+static int ensure_parent_dir(const char* file_path) {
+    // Create parent directory for a file path
+    char buf[1024];
+    strncpy(buf, file_path, sizeof(buf)-1);
+    buf[sizeof(buf)-1] = '\0';
+    char* d = dirname(buf);
+    return mkdir_p(d, 0755);
+}
+
+// -------- JSON config --------
+static void set_default_config(ServerConfig* c) {
+    c->port = DEFAULT_PORT;
+    c->tls_enabled = 0;
+    strncpy(c->tls_dir,      "assets/tls",        sizeof(c->tls_dir));
+    strncpy(c->log_file,     "assets/log.txt",    sizeof(c->log_file));
+    strncpy(c->incoming_dir, "assets/incoming",   sizeof(c->incoming_dir));
+    strncpy(c->histogram_dir,"assets/histogram",  sizeof(c->histogram_dir));
+    strncpy(c->colors_red,   "assets/colors/red", sizeof(c->colors_red));
+    strncpy(c->colors_green, "assets/colors/green", sizeof(c->colors_green));
+    strncpy(c->colors_blue,  "assets/colors/blue", sizeof(c->colors_blue));
+    // null-terminate
+    c->tls_dir[sizeof(c->tls_dir)-1] = '\0';
+    c->log_file[sizeof(c->log_file)-1] = '\0';
+    c->incoming_dir[sizeof(c->incoming_dir)-1] = '\0';
+    c->histogram_dir[sizeof(c->histogram_dir)-1] = '\0';
+    c->colors_red[sizeof(c->colors_red)-1] = '\0';
+    c->colors_green[sizeof(c->colors_green)-1] = '\0';
+    c->colors_blue[sizeof(c->colors_blue)-1] = '\0';
+}
+
+static int load_config_json(const char* path, ServerConfig* c) {
+    set_default_config(c);
+
+    FILE* f = fopen(path, "rb");
+    if (!f) {
+        return -1; // not found; caller may create default file
+    }
+    fseek(f, 0, SEEK_END);
+    long sz = ftell(f);
+    if (sz < 0) { fclose(f); return -1; }
+    fseek(f, 0, SEEK_SET);
+
+    char* buf = (char*)malloc((size_t)sz + 1);
+    if (!buf) { fclose(f); return -1; }
+    if (fread(buf, 1, (size_t)sz, f) != (size_t)sz) {
+        free(buf); fclose(f); return -1;
+    }
+    buf[sz] = '\0';
+    fclose(f);
+
+    struct json_object* root = json_tokener_parse(buf);
+    free(buf);
+    if (!root) return -1;
+
+    struct json_object *js_server = NULL, *js_paths = NULL;
+    if (json_object_object_get_ex(root, "server", &js_server)) {
+        struct json_object *jport = NULL, *jtls = NULL, *jtlsdir = NULL;
+        if (json_object_object_get_ex(js_server, "port", &jport))
+            c->port = json_object_get_int(jport);
+
+        if (json_object_object_get_ex(js_server, "tls_enabled", &jtls))
+            c->tls_enabled = json_object_get_int(jtls);
+
+        if (json_object_object_get_ex(js_server, "tls_dir", &jtlsdir)) {
+            const char* s = json_object_get_string(jtlsdir);
+            if (s) { strncpy(c->tls_dir, s, sizeof(c->tls_dir)-1); c->tls_dir[sizeof(c->tls_dir)-1] = '\0'; }
+        }
+    }
+
+    if (json_object_object_get_ex(root, "paths", &js_paths)) {
+        struct json_object *jlog = NULL, *jincoming = NULL, *jhist = NULL, *jcolors = NULL;
+        if (json_object_object_get_ex(js_paths, "log_file", &jlog)) {
+            const char* s = json_object_get_string(jlog);
+            if (s) { strncpy(c->log_file, s, sizeof(c->log_file)-1); c->log_file[sizeof(c->log_file)-1] = '\0'; }
+        }
+        if (json_object_object_get_ex(js_paths, "incoming_dir", &jincoming)) {
+            const char* s = json_object_get_string(jincoming);
+            if (s) { strncpy(c->incoming_dir, s, sizeof(c->incoming_dir)-1); c->incoming_dir[sizeof(c->incoming_dir)-1] = '\0'; }
+        }
+        if (json_object_object_get_ex(js_paths, "histogram_dir", &jhist)) {
+            const char* s = json_object_get_string(jhist);
+            if (s) { strncpy(c->histogram_dir, s, sizeof(c->histogram_dir)-1); c->histogram_dir[sizeof(c->histogram_dir)-1] = '\0'; }
+        }
+        if (json_object_object_get_ex(js_paths, "colors_dir", &jcolors)) {
+            struct json_object *jr=NULL, *jg=NULL, *jb=NULL;
+            if (json_object_object_get_ex(jcolors, "red", &jr)) {
+                const char* s = json_object_get_string(jr);
+                if (s) { strncpy(c->colors_red, s, sizeof(c->colors_red)-1); c->colors_red[sizeof(c->colors_red)-1] = '\0'; }
+            }
+            if (json_object_object_get_ex(jcolors, "green", &jg)) {
+                const char* s = json_object_get_string(jg);
+                if (s) { strncpy(c->colors_green, s, sizeof(c->colors_green)-1); c->colors_green[sizeof(c->colors_green)-1] = '\0'; }
+            }
+            if (json_object_object_get_ex(jcolors, "blue", &jb)) {
+                const char* s = json_object_get_string(jb);
+                if (s) { strncpy(c->colors_blue, s, sizeof(c->colors_blue)-1); c->colors_blue[sizeof(c->colors_blue)-1] = '\0'; }
+            }
+        }
+    }
+
+    json_object_put(root);
+    return 0;
+}
+
+// Create required directories based on config.
+// Note: log_file is a file path; others are directories.
+static int ensure_dirs_from_config(const ServerConfig* c) {
+    if (ensure_parent_dir(c->log_file) != 0) return -1;
+    if (mkdir_p(c->incoming_dir, 0755) != 0) return -1;
+    if (mkdir_p(c->histogram_dir, 0755) != 0) return -1;
+    if (mkdir_p(c->colors_red, 0755) != 0) return -1;
+    if (mkdir_p(c->colors_green, 0755) != 0) return -1;
+    if (mkdir_p(c->colors_blue, 0755) != 0) return -1;
+    if (mkdir_p(c->tls_dir, 0755) != 0) return -1;
+    return 0;
+}
+
+// -------- Connection abstraction (plain/TLS) --------
 typedef struct {
     int  fd;
-    SSL* ssl; // NULL si no TLS
+    SSL* ssl; // NULL if plain
 } Conn;
 
 static int cs_send_all(Conn* c, const void* buf, size_t len) {
     const unsigned char* p = (const unsigned char*)buf;
     size_t s = 0;
     while (s < len) {
-        ssize_t n;
-        if (c->ssl) n = SSL_write(c->ssl, p + s, (int)(len - s));
-        else        n = send(c->fd, p + s, len - s, 0);
+        ssize_t n = c->ssl ? SSL_write(c->ssl, p + s, (int)(len - s))
+                           : send(c->fd, p + s, len - s, 0);
         if (n <= 0) return -1;
         s += (size_t)n;
     }
@@ -89,17 +253,13 @@ static int cs_recv_all(Conn* c, void* buf, size_t len) {
     unsigned char* p = (unsigned char*)buf;
     size_t r = 0;
     while (r < len) {
-        ssize_t n;
-        if (c->ssl) n = SSL_read(c->ssl, p + r, (int)(len - r));
-        else        n = recv(c->fd, p + r, len - r, 0);
+        ssize_t n = c->ssl ? SSL_read(c->ssl, p + r, (int)(len - r))
+                           : recv(c->fd, p + r, len - r, 0);
         if (n <= 0) return -1;
         r += (size_t)n;
     }
     return 0;
 }
-
-static uint32_t to_be32_s(uint32_t v)   { return htonl(v); }
-static uint32_t from_be32_s(uint32_t v) { return ntohl(v); }
 
 static int send_header(Conn* c, uint8_t type, uint32_t payload_len, const char* image_id) {
     MessageHeader h;
@@ -131,7 +291,13 @@ static int send_message(Conn* c, uint8_t type, const char* image_id,
     return 0;
 }
 
-// --- TLS init/cleanup ---
+static void conn_close(Conn* c) {
+    if (!c) return;
+    if (c->ssl) { SSL_shutdown(c->ssl); SSL_free(c->ssl); c->ssl = NULL; }
+    if (c->fd >= 0) { close(c->fd); c->fd = -1; }
+}
+
+// -------- TLS init using config --------
 static int tls_init_ctx(void) {
     SSL_library_init();
     SSL_load_error_strings();
@@ -140,9 +306,9 @@ static int tls_init_ctx(void) {
     g_ssl_ctx = SSL_CTX_new(TLS_server_method());
     if (!g_ssl_ctx) return -1;
 
-    // Rutas por defecto (no ampliamos config; solo lo justo para habilitar TLS)
-    const char* crt = "assets/tls/server.crt";
-    const char* key = "assets/tls/server.key";
+    char crt[1024], key[1024];
+    snprintf(crt, sizeof(crt), "%s/server.crt", g_cfg.tls_dir);
+    snprintf(key, sizeof(key), "%s/server.key", g_cfg.tls_dir);
 
     if (SSL_CTX_use_certificate_file(g_ssl_ctx, crt, SSL_FILETYPE_PEM) != 1) return -1;
     if (SSL_CTX_use_PrivateKey_file(g_ssl_ctx, key, SSL_FILETYPE_PEM) != 1) return -1;
@@ -151,17 +317,10 @@ static int tls_init_ctx(void) {
     return 0;
 }
 
-static void conn_close(Conn* c) {
-    if (!c) return;
-    if (c->ssl) { SSL_shutdown(c->ssl); SSL_free(c->ssl); c->ssl = NULL; }
-    if (c->fd >= 0) { close(c->fd); c->fd = -1; }
-}
-
-// --- Rutina por conexión (un hilo por cliente) ---
+// -------- Per-connection thread --------
 static void* handle_client(void* arg) {
     Conn* c = (Conn*)arg;
 
-    // Estado por imagen
     char     current_uuid[37] = {0};
     char     current_filename[MAX_FILENAME] = {0};
     char     current_format[10] = {0};
@@ -178,7 +337,6 @@ static void* handle_client(void* arg) {
         }
 
         if (h.type == MSG_HELLO) {
-            // Generar UUID y responder
             uuid_t uu;
             uuid_generate(uu);
             uuid_unparse_lower(uu, current_uuid);
@@ -207,8 +365,13 @@ static void* handle_client(void* arg) {
             current_filename[sizeof(current_filename)-1] = '\0';
             current_format[sizeof(current_format)-1]     = '\0';
 
-            char outpath[512];
-            snprintf(outpath, sizeof(outpath), "assets/incoming/%s_%s", h.image_id, current_filename);
+            // Open output file under configured incoming_dir
+            char outpath[1024];
+            snprintf(outpath, sizeof(outpath), "%s/%s_%s", g_cfg.incoming_dir, h.image_id, current_filename);
+            if (ensure_parent_dir(outpath) != 0) {
+                log_line("Failed to create parent dir for %s", outpath);
+                break;
+            }
             out = fopen(outpath, "wb");
             if (!out) {
                 log_line("Failed to open output file %s: %s", outpath, strerror(errno));
@@ -241,7 +404,6 @@ static void* handle_client(void* arg) {
             else remaining_bytes = 0;
 
         } else if (h.type == MSG_IMAGE_COMPLETE) {
-            // Consumir posible payload (formato como string)
             char fmt[32] = {0};
             if (h.length > 0 && h.length < sizeof(fmt)) {
                 if (cs_recv_all(c, fmt, h.length) != 0) {
@@ -250,7 +412,6 @@ static void* handle_client(void* arg) {
                 }
                 fmt[sizeof(fmt)-1] = '\0';
             } else if (h.length > 0) {
-                // Si vino más de lo esperado, solo consumirlo
                 char* tmp = (char*)malloc(h.length);
                 if (!tmp) break;
                 if (cs_recv_all(c, tmp, h.length) != 0) { free(tmp); break; }
@@ -263,20 +424,20 @@ static void* handle_client(void* arg) {
                      h.image_id, current_filename, fmt[0]?fmt:current_format,
                      received_chunks, remaining_bytes);
 
-            // === ACK FINAL ===
+            // Final ACK
             if (send_message(c, MSG_ACK, h.image_id, NULL, 0) != 0) {
                 log_line("Failed sending final ACK");
                 break;
             }
 
-            // Reset de estado para aceptar otra imagen en la MISMA conexión si el cliente quiere
-            current_uuid[0] = 0;
+            // Reset to allow another image on same connection
+            current_uuid[0]   = 0;
             current_filename[0] = 0;
             current_format[0] = 0;
             expected_chunks = received_chunks = remaining_bytes = 0;
 
         } else {
-            // Desconocido: consumir payload si existiera
+            // Consume unknown payload if any, then ignore
             if (h.length > 0) {
                 char* tmp = (char*)malloc(h.length);
                 if (!tmp) break;
@@ -294,31 +455,39 @@ static void* handle_client(void* arg) {
     return NULL;
 }
 
-int main(int argc, char** argv) {
-    ensure_dirs();
-    g_log = fopen("assets/log.txt", "a");
-    if (!g_log) {
-        perror("open log");
+int main(void) {
+    // Load config
+    if (load_config_json("assets/config.json", &g_cfg) != 0) {
+        // If missing, create default directories and default log file,
+        // but still try to start with defaults.
+        set_default_config(&g_cfg);
+    }
+
+    // Ensure directories exist
+    if (ensure_dirs_from_config(&g_cfg) != 0) {
+        fprintf(stderr, "Failed to create required directories from config\n");
         return 1;
     }
 
-    // Activar TLS si se solicita con --tls o SERVER_TLS=1
-    for (int i = 1; i < argc; ++i) {
-        if (strcmp(argv[i], "--tls") == 0) g_tls_enabled = 1;
+    // Open log file
+    g_log = fopen(g_cfg.log_file, "a");
+    if (!g_log) {
+        perror("open log_file");
+        return 1;
     }
-    const char* env_tls = getenv("SERVER_TLS");
-    if (env_tls && strcmp(env_tls, "1") == 0) g_tls_enabled = 1;
 
-    if (g_tls_enabled) {
+    // TLS init if enabled
+    if (g_cfg.tls_enabled) {
         if (tls_init_ctx() != 0) {
-            log_line("TLS requested but initialization failed. Check assets/tls/server.crt & server.key");
+            log_line("TLS enabled in config, but initialization failed. Check certificate and key in %s", g_cfg.tls_dir);
             return 1;
         }
-        log_line("TLS enabled (listening TLS) on port %d", LISTEN_PORT);
+        log_line("TLS enabled (listening TLS) on port %d", g_cfg.port);
     } else {
-        log_line("Server starting (plain TCP) on port %d", LISTEN_PORT);
+        log_line("Server starting (plain TCP) on port %d", g_cfg.port);
     }
 
+    // Listen socket
     int srv = socket(AF_INET, SOCK_STREAM, 0);
     if (srv < 0) { perror("socket"); return 1; }
 
@@ -329,7 +498,7 @@ int main(int argc, char** argv) {
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = INADDR_ANY;
-    addr.sin_port = htons(LISTEN_PORT);
+    addr.sin_port = htons(g_cfg.port);
 
     if (bind(srv, (struct sockaddr*)&addr, sizeof(addr)) != 0) {
         perror("bind");
@@ -343,6 +512,7 @@ int main(int argc, char** argv) {
     }
     log_line("Listening...");
 
+    // Accept loop with thread-per-connection
     for (;;) {
         struct sockaddr_in cli;
         socklen_t clilen = sizeof(cli);
@@ -353,15 +523,18 @@ int main(int argc, char** argv) {
         inet_ntop(AF_INET, &cli.sin_addr, cip, sizeof(cip));
         log_line("Accepted connection from %s:%d", cip, ntohs(cli.sin_port));
 
-        // Preparar conexión (con o sin TLS) y lanzar hilo
         Conn* c = (Conn*)calloc(1, sizeof(Conn));
         if (!c) { close(fd); continue; }
         c->fd = fd;
         c->ssl = NULL;
 
-        if (g_tls_enabled) {
+        if (g_cfg.tls_enabled) {
             SSL* ssl = SSL_new(g_ssl_ctx);
-            if (!ssl) { close(fd); free(c); continue; }
+            if (!ssl) {
+                close(fd);
+                free(c);
+                continue;
+            }
             SSL_set_fd(ssl, fd);
             if (SSL_accept(ssl) != 1) {
                 log_line("TLS handshake failed");
@@ -384,8 +557,8 @@ int main(int argc, char** argv) {
         pthread_detach(th);
     }
 
-    // Nunca llegamos aquí normalmente
-    fclose(g_log);
+    // (Unreachable in normal run)
     if (g_ssl_ctx) { SSL_CTX_free(g_ssl_ctx); g_ssl_ctx = NULL; }
+    fclose(g_log);
     return 0;
 }

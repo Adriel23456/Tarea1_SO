@@ -201,7 +201,10 @@ static int send_one_image(const char* filepath,
                           ProgressCallback cb) {
     // 1) Conectar
     if (cb) cb("Connecting to server...", 0.0);
-    gboolean want_tls = (cfg->protocol && g_ascii_strcasecmp(cfg->protocol, "https") == 0);
+
+    // Ahora protocol es un buffer propio, no un puntero del JSON.
+    gboolean want_tls = (g_ascii_strcasecmp(cfg->protocol, "https") == 0);
+
     NetStream ns;
     if (connect_with_retry(cfg->host, cfg->port,
                            cfg->connect_timeout,
@@ -267,13 +270,13 @@ static int send_one_image(const char* filepath,
         return -1;
     }
 
-    // 4) Enviar por chunks (TCP ya garantiza orden e integridad)
-    unsigned char* buf = (unsigned char*)malloc(chunk);
+    // 4) Enviar por chunks
+    unsigned char* buf = (unsigned char*)malloc((size_t)chunk);
     if (!buf) { fclose(f); close_stream(&ns); return -1; }
 
     long sent = 0;
     while (!feof(f)) {
-        size_t n = fread(buf, 1, chunk, f);
+        size_t n = fread(buf, 1, (size_t)chunk, f);
         if (ferror(f)) {
             if (cb) cb("Read error", 0.0);
             free(buf); fclose(f); close_stream(&ns);
@@ -306,7 +309,7 @@ static int send_one_image(const char* filepath,
         return -1;
     }
 
-    // Esperar ACK final del servidor
+    // 6) Esperar ACK final del servidor
     {
         MessageHeader ackhdr;
         if (recv_header(&ns, &ackhdr) != 0 || ackhdr.type != MSG_ACK) {
@@ -315,6 +318,8 @@ static int send_one_image(const char* filepath,
             return -1;
         }
     }
+
+    // 7) Cerrar
     close_stream(&ns);
     if (cb) {
         char msg[256];

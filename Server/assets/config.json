@@ -1,0 +1,17 @@
+{
+  "server": {
+    "port": 1717,
+    "tls_enabled": 0,
+    "tls_dir": "assets/tls"
+  },
+  "paths": {
+    "log_file": "assets/log.txt",
+    "incoming_dir": "assets/incoming",
+    "histogram_dir": "assets/histogram",
+    "colors_dir": {
+      "red": "assets/colors/red",
+      "green": "assets/colors/green",
+      "blue": "assets/colors/blue"
+    }
+  }
+}

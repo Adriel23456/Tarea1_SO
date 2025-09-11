@@ -1,87 +1,184 @@
 == Image Server Log ==
-[2025-09-11 03:51:46] Server starting (plain TCP) on port 1717
-[2025-09-11 03:51:46] Listening...
-[2025-09-11 03:52:10] Accepted connection from 127.0.0.1:54638
-[2025-09-11 03:52:10] HELLO -> new image id = 87104236-98a8-41b7-878c-3c837e8f3951
-[2025-09-11 03:52:10] IMAGE_INFO: id=87104236-98a8-41b7-878c-3c837e8f3951 file=Azul.png size=136733 bytes chunks=3 proc=3 fmt=png
-[2025-09-11 03:52:10] IMAGE_COMPLETE: id=87104236-98a8-41b7-878c-3c837e8f3951 file=Azul.png fmt=png chunks=3 remaining=0
-[2025-09-11 03:52:10] Connection dropped while waiting header
-[2025-09-11 03:52:10] Connection closed
-[2025-09-11 03:52:10] Accepted connection from 127.0.0.1:54652
-[2025-09-11 03:52:10] HELLO -> new image id = 08523aa7-dfb6-4c78-95d6-dc3a7f8e2b62
-[2025-09-11 03:52:10] IMAGE_INFO: id=08523aa7-dfb6-4c78-95d6-dc3a7f8e2b62 file=cine.gif size=645901 bytes chunks=10 proc=3 fmt=gif
-[2025-09-11 03:52:10] IMAGE_COMPLETE: id=08523aa7-dfb6-4c78-95d6-dc3a7f8e2b62 file=cine.gif fmt=gif chunks=10 remaining=0
-[2025-09-11 03:52:10] Connection dropped while waiting header
-[2025-09-11 03:52:10] Connection closed
-[2025-09-11 03:52:10] Accepted connection from 127.0.0.1:54666
-[2025-09-11 03:52:10] HELLO -> new image id = 97ddce6e-820a-4d45-883c-f3739ef81d5a
-[2025-09-11 03:52:10] IMAGE_INFO: id=97ddce6e-820a-4d45-883c-f3739ef81d5a file=Histograma.png size=71952 bytes chunks=2 proc=3 fmt=png
-[2025-09-11 03:52:10] IMAGE_COMPLETE: id=97ddce6e-820a-4d45-883c-f3739ef81d5a file=Histograma.png fmt=png chunks=2 remaining=0
-[2025-09-11 03:52:10] Connection dropped while waiting header
-[2025-09-11 03:52:10] Connection closed
-[2025-09-11 03:52:10] Accepted connection from 127.0.0.1:54672
-[2025-09-11 03:52:10] HELLO -> new image id = 76e7953b-1e90-47a6-965f-6affd0166b9a
-[2025-09-11 03:52:10] IMAGE_INFO: id=76e7953b-1e90-47a6-965f-6affd0166b9a file=Rojo.png size=80364 bytes chunks=2 proc=3 fmt=png
-[2025-09-11 03:52:10] IMAGE_COMPLETE: id=76e7953b-1e90-47a6-965f-6affd0166b9a file=Rojo.png fmt=png chunks=2 remaining=0
-[2025-09-11 03:52:10] Connection dropped while waiting header
-[2025-09-11 03:52:10] Connection closed
-[2025-09-11 03:52:10] Accepted connection from 127.0.0.1:54678
-[2025-09-11 03:52:10] HELLO -> new image id = 8b26ef97-73e7-4865-889a-bcb8ab6c1cbd
-[2025-09-11 03:52:10] IMAGE_INFO: id=8b26ef97-73e7-4865-889a-bcb8ab6c1cbd file=rojo-elmo.gif size=631341 bytes chunks=10 proc=3 fmt=gif
-[2025-09-11 03:52:10] IMAGE_COMPLETE: id=8b26ef97-73e7-4865-889a-bcb8ab6c1cbd file=rojo-elmo.gif fmt=gif chunks=10 remaining=0
-[2025-09-11 03:52:10] Connection dropped while waiting header
-[2025-09-11 03:52:10] Connection closed
-[2025-09-11 03:52:10] Accepted connection from 127.0.0.1:54686
-[2025-09-11 03:52:10] HELLO -> new image id = 7208e104-30da-4060-8d67-242a21bbc731
-[2025-09-11 03:52:10] IMAGE_INFO: id=7208e104-30da-4060-8d67-242a21bbc731 file=Verde.png size=829101 bytes chunks=13 proc=3 fmt=png
-[2025-09-11 03:52:10] IMAGE_COMPLETE: id=7208e104-30da-4060-8d67-242a21bbc731 file=Verde.png fmt=png chunks=13 remaining=0
-[2025-09-11 03:52:10] Connection dropped while waiting header
-[2025-09-11 03:52:10] Connection closed
-[2025-09-11 03:52:10] Accepted connection from 127.0.0.1:54696
-[2025-09-11 03:52:10] HELLO -> new image id = 8a450102-38a2-48de-b71b-b4984e1e835f
-[2025-09-11 03:52:10] IMAGE_INFO: id=8a450102-38a2-48de-b71b-b4984e1e835f file=verde-elmo.gif size=585446 bytes chunks=9 proc=3 fmt=gif
-[2025-09-11 03:52:10] IMAGE_COMPLETE: id=8a450102-38a2-48de-b71b-b4984e1e835f file=verde-elmo.gif fmt=gif chunks=9 remaining=0
-[2025-09-11 03:52:10] Connection dropped while waiting header
-[2025-09-11 03:52:10] Connection closed
-[2025-09-11 03:52:30] Accepted connection from 127.0.0.1:54926
-[2025-09-11 03:52:30] HELLO -> new image id = de6bdfb2-f0c5-404a-acd3-e5200cd7c030
-[2025-09-11 03:52:30] IMAGE_INFO: id=de6bdfb2-f0c5-404a-acd3-e5200cd7c030 file=Azul.png size=136733 bytes chunks=3 proc=3 fmt=png
-[2025-09-11 03:52:30] IMAGE_COMPLETE: id=de6bdfb2-f0c5-404a-acd3-e5200cd7c030 file=Azul.png fmt=png chunks=3 remaining=0
-[2025-09-11 03:52:30] Connection dropped while waiting header
-[2025-09-11 03:52:30] Connection closed
-[2025-09-11 03:52:30] Accepted connection from 127.0.0.1:54938
-[2025-09-11 03:52:30] HELLO -> new image id = 3555a871-c186-4934-a7b9-79e07cb59cf4
-[2025-09-11 03:52:30] IMAGE_INFO: id=3555a871-c186-4934-a7b9-79e07cb59cf4 file=cine.gif size=645901 bytes chunks=10 proc=3 fmt=gif
-[2025-09-11 03:52:30] IMAGE_COMPLETE: id=3555a871-c186-4934-a7b9-79e07cb59cf4 file=cine.gif fmt=gif chunks=10 remaining=0
-[2025-09-11 03:52:30] Connection dropped while waiting header
-[2025-09-11 03:52:30] Connection closed
-[2025-09-11 03:52:30] Accepted connection from 127.0.0.1:54940
-[2025-09-11 03:52:30] HELLO -> new image id = 799cf7dd-23e1-4a5c-8489-c96c11f4dfd4
-[2025-09-11 03:52:30] IMAGE_INFO: id=799cf7dd-23e1-4a5c-8489-c96c11f4dfd4 file=Histograma.png size=71952 bytes chunks=2 proc=3 fmt=png
-[2025-09-11 03:52:30] IMAGE_COMPLETE: id=799cf7dd-23e1-4a5c-8489-c96c11f4dfd4 file=Histograma.png fmt=png chunks=2 remaining=0
-[2025-09-11 03:52:30] Connection dropped while waiting header
-[2025-09-11 03:52:30] Connection closed
-[2025-09-11 03:52:30] Accepted connection from 127.0.0.1:54956
-[2025-09-11 03:52:30] HELLO -> new image id = b4690589-cb9f-4be0-957b-1d7faaf7f0ef
-[2025-09-11 03:52:30] IMAGE_INFO: id=b4690589-cb9f-4be0-957b-1d7faaf7f0ef file=Rojo.png size=80364 bytes chunks=2 proc=3 fmt=png
-[2025-09-11 03:52:30] IMAGE_COMPLETE: id=b4690589-cb9f-4be0-957b-1d7faaf7f0ef file=Rojo.png fmt=png chunks=2 remaining=0
-[2025-09-11 03:52:30] Connection dropped while waiting header
-[2025-09-11 03:52:30] Connection closed
-[2025-09-11 03:52:30] Accepted connection from 127.0.0.1:54972
-[2025-09-11 03:52:30] HELLO -> new image id = a036a659-c23c-497c-9906-38277dca9e6d
-[2025-09-11 03:52:30] IMAGE_INFO: id=a036a659-c23c-497c-9906-38277dca9e6d file=rojo-elmo.gif size=631341 bytes chunks=10 proc=3 fmt=gif
-[2025-09-11 03:52:30] IMAGE_COMPLETE: id=a036a659-c23c-497c-9906-38277dca9e6d file=rojo-elmo.gif fmt=gif chunks=10 remaining=0
-[2025-09-11 03:52:30] Connection dropped while waiting header
-[2025-09-11 03:52:30] Connection closed
-[2025-09-11 03:52:30] Accepted connection from 127.0.0.1:54978
-[2025-09-11 03:52:30] HELLO -> new image id = 2caeb048-baa8-4e4a-875d-2df366ff8856
-[2025-09-11 03:52:30] IMAGE_INFO: id=2caeb048-baa8-4e4a-875d-2df366ff8856 file=Verde.png size=829101 bytes chunks=13 proc=3 fmt=png
-[2025-09-11 03:52:30] IMAGE_COMPLETE: id=2caeb048-baa8-4e4a-875d-2df366ff8856 file=Verde.png fmt=png chunks=13 remaining=0
-[2025-09-11 03:52:30] Connection dropped while waiting header
-[2025-09-11 03:52:30] Connection closed
-[2025-09-11 03:52:30] Accepted connection from 127.0.0.1:54986
-[2025-09-11 03:52:30] HELLO -> new image id = d64e0b9a-7ceb-4fe0-8faa-e1dec80c73c1
-[2025-09-11 03:52:30] IMAGE_INFO: id=d64e0b9a-7ceb-4fe0-8faa-e1dec80c73c1 file=verde-elmo.gif size=585446 bytes chunks=9 proc=3 fmt=gif
-[2025-09-11 03:52:30] IMAGE_COMPLETE: id=d64e0b9a-7ceb-4fe0-8faa-e1dec80c73c1 file=verde-elmo.gif fmt=gif chunks=9 remaining=0
-[2025-09-11 03:52:30] Connection dropped while waiting header
-[2025-09-11 03:52:30] Connection closed
+
+[2025-09-11 04:14:16] TLS enabled (listening TLS) on port 1717
+[2025-09-11 04:14:16] Listening...
+[2025-09-11 04:14:24] Accepted connection from 127.0.0.1:33136
+[2025-09-11 04:14:24] HELLO -> new image id = 32a6f76c-8037-4c3f-b06d-e60c0416ed46
+[2025-09-11 04:14:25] IMAGE_INFO: id=32a6f76c-8037-4c3f-b06d-e60c0416ed46 file=Azul.png size=136733 bytes chunks=3 proc=3 fmt=png
+[2025-09-11 04:14:25] IMAGE_COMPLETE: id=32a6f76c-8037-4c3f-b06d-e60c0416ed46 file=Azul.png fmt=png chunks=3 remaining=0
+[2025-09-11 04:14:25] Connection dropped while waiting header
+[2025-09-11 04:14:25] Connection closed
+[2025-09-11 04:14:46] Server starting (plain TCP) on port 1717
+[2025-09-11 04:14:46] Listening...
+[2025-09-11 04:14:59] Accepted connection from 127.0.0.1:38908
+[2025-09-11 04:14:59] HELLO -> new image id = 26e96cda-2b94-437e-9312-c15ae3810524
+[2025-09-11 04:14:59] IMAGE_INFO: id=26e96cda-2b94-437e-9312-c15ae3810524 file=Azul.png size=136733 bytes chunks=3 proc=3 fmt=png
+[2025-09-11 04:14:59] IMAGE_COMPLETE: id=26e96cda-2b94-437e-9312-c15ae3810524 file=Azul.png fmt=png chunks=3 remaining=0
+[2025-09-11 04:14:59] Connection dropped while waiting header
+[2025-09-11 04:14:59] Connection closed
+[2025-09-11 04:14:59] Accepted connection from 127.0.0.1:38924
+[2025-09-11 04:14:59] HELLO -> new image id = c2f1f8dd-5719-48b4-8937-1286ff75a9a0
+[2025-09-11 04:14:59] IMAGE_INFO: id=c2f1f8dd-5719-48b4-8937-1286ff75a9a0 file=cine.gif size=645901 bytes chunks=10 proc=3 fmt=gif
+[2025-09-11 04:14:59] IMAGE_COMPLETE: id=c2f1f8dd-5719-48b4-8937-1286ff75a9a0 file=cine.gif fmt=gif chunks=10 remaining=0
+[2025-09-11 04:14:59] Connection dropped while waiting header
+[2025-09-11 04:14:59] Connection closed
+[2025-09-11 04:14:59] Accepted connection from 127.0.0.1:38928
+[2025-09-11 04:14:59] HELLO -> new image id = 181995a5-b978-45fc-b81b-a9940bfa9699
+[2025-09-11 04:14:59] IMAGE_INFO: id=181995a5-b978-45fc-b81b-a9940bfa9699 file=Histograma.png size=71952 bytes chunks=2 proc=3 fmt=png
+[2025-09-11 04:14:59] IMAGE_COMPLETE: id=181995a5-b978-45fc-b81b-a9940bfa9699 file=Histograma.png fmt=png chunks=2 remaining=0
+[2025-09-11 04:14:59] Connection dropped while waiting header
+[2025-09-11 04:14:59] Connection closed
+[2025-09-11 04:14:59] Accepted connection from 127.0.0.1:38930
+[2025-09-11 04:14:59] HELLO -> new image id = e1e7b0d4-ddd2-431a-9d94-8558d40787e7
+[2025-09-11 04:14:59] IMAGE_INFO: id=e1e7b0d4-ddd2-431a-9d94-8558d40787e7 file=Rojo.png size=80364 bytes chunks=2 proc=3 fmt=png
+[2025-09-11 04:14:59] IMAGE_COMPLETE: id=e1e7b0d4-ddd2-431a-9d94-8558d40787e7 file=Rojo.png fmt=png chunks=2 remaining=0
+[2025-09-11 04:14:59] Connection dropped while waiting header
+[2025-09-11 04:14:59] Connection closed
+[2025-09-11 04:14:59] Accepted connection from 127.0.0.1:38942
+[2025-09-11 04:14:59] HELLO -> new image id = 045fed3c-62f7-4b3e-8023-54d6a6d660f2
+[2025-09-11 04:14:59] IMAGE_INFO: id=045fed3c-62f7-4b3e-8023-54d6a6d660f2 file=rojo-elmo.gif size=631341 bytes chunks=10 proc=3 fmt=gif
+[2025-09-11 04:14:59] IMAGE_COMPLETE: id=045fed3c-62f7-4b3e-8023-54d6a6d660f2 file=rojo-elmo.gif fmt=gif chunks=10 remaining=0
+[2025-09-11 04:14:59] Connection dropped while waiting header
+[2025-09-11 04:14:59] Connection closed
+[2025-09-11 04:14:59] Accepted connection from 127.0.0.1:38946
+[2025-09-11 04:14:59] HELLO -> new image id = 9f038c56-52c1-4558-9bf0-1f5bde5ba3c5
+[2025-09-11 04:14:59] IMAGE_INFO: id=9f038c56-52c1-4558-9bf0-1f5bde5ba3c5 file=Verde.png size=829101 bytes chunks=13 proc=3 fmt=png
+[2025-09-11 04:14:59] IMAGE_COMPLETE: id=9f038c56-52c1-4558-9bf0-1f5bde5ba3c5 file=Verde.png fmt=png chunks=13 remaining=0
+[2025-09-11 04:14:59] Connection dropped while waiting header
+[2025-09-11 04:14:59] Connection closed
+[2025-09-11 04:14:59] Accepted connection from 127.0.0.1:38948
+[2025-09-11 04:14:59] HELLO -> new image id = 3894ef38-4d1d-48c3-bc72-9a57b6199453
+[2025-09-11 04:14:59] IMAGE_INFO: id=3894ef38-4d1d-48c3-bc72-9a57b6199453 file=verde-elmo.gif size=585446 bytes chunks=9 proc=3 fmt=gif
+[2025-09-11 04:14:59] IMAGE_COMPLETE: id=3894ef38-4d1d-48c3-bc72-9a57b6199453 file=verde-elmo.gif fmt=gif chunks=9 remaining=0
+[2025-09-11 04:14:59] Connection dropped while waiting header
+[2025-09-11 04:14:59] Connection closed
+[2025-09-11 04:15:17] Accepted connection from 127.0.0.1:43884
+[2025-09-11 04:15:17] HELLO -> new image id = 8736f13f-7ff4-4e1a-89ae-f0d38df897fc
+[2025-09-11 04:15:17] IMAGE_INFO: id=8736f13f-7ff4-4e1a-89ae-f0d38df897fc file=Azul.png size=136733 bytes chunks=3 proc=3 fmt=png
+[2025-09-11 04:15:17] IMAGE_COMPLETE: id=8736f13f-7ff4-4e1a-89ae-f0d38df897fc file=Azul.png fmt=png chunks=3 remaining=0
+[2025-09-11 04:15:17] Connection dropped while waiting header
+[2025-09-11 04:15:17] Connection closed
+[2025-09-11 04:15:17] Accepted connection from 127.0.0.1:43886
+[2025-09-11 04:15:17] HELLO -> new image id = c90e8204-9ba2-48ad-9a41-440bead78eec
+[2025-09-11 04:15:17] IMAGE_INFO: id=c90e8204-9ba2-48ad-9a41-440bead78eec file=cine.gif size=645901 bytes chunks=10 proc=3 fmt=gif
+[2025-09-11 04:15:17] IMAGE_COMPLETE: id=c90e8204-9ba2-48ad-9a41-440bead78eec file=cine.gif fmt=gif chunks=10 remaining=0
+[2025-09-11 04:15:17] Connection dropped while waiting header
+[2025-09-11 04:15:17] Connection closed
+[2025-09-11 04:15:17] Accepted connection from 127.0.0.1:43890
+[2025-09-11 04:15:17] HELLO -> new image id = 5f9de120-f577-4541-9ce2-1f00901bbe45
+[2025-09-11 04:15:17] IMAGE_INFO: id=5f9de120-f577-4541-9ce2-1f00901bbe45 file=Histograma.png size=71952 bytes chunks=2 proc=3 fmt=png
+[2025-09-11 04:15:17] IMAGE_COMPLETE: id=5f9de120-f577-4541-9ce2-1f00901bbe45 file=Histograma.png fmt=png chunks=2 remaining=0
+[2025-09-11 04:15:17] Connection dropped while waiting header
+[2025-09-11 04:15:17] Connection closed
+[2025-09-11 04:15:17] Accepted connection from 127.0.0.1:43902
+[2025-09-11 04:15:17] HELLO -> new image id = df0c68ab-fabd-408a-987b-f2ddcc0cc5bd
+[2025-09-11 04:15:17] IMAGE_INFO: id=df0c68ab-fabd-408a-987b-f2ddcc0cc5bd file=Rojo.png size=80364 bytes chunks=2 proc=3 fmt=png
+[2025-09-11 04:15:17] IMAGE_COMPLETE: id=df0c68ab-fabd-408a-987b-f2ddcc0cc5bd file=Rojo.png fmt=png chunks=2 remaining=0
+[2025-09-11 04:15:17] Connection dropped while waiting header
+[2025-09-11 04:15:17] Connection closed
+[2025-09-11 04:15:17] Accepted connection from 127.0.0.1:43918
+[2025-09-11 04:15:17] HELLO -> new image id = c75a46d4-b738-42c2-ba89-ce8afb3a85da
+[2025-09-11 04:15:17] IMAGE_INFO: id=c75a46d4-b738-42c2-ba89-ce8afb3a85da file=rojo-elmo.gif size=631341 bytes chunks=10 proc=3 fmt=gif
+[2025-09-11 04:15:17] IMAGE_COMPLETE: id=c75a46d4-b738-42c2-ba89-ce8afb3a85da file=rojo-elmo.gif fmt=gif chunks=10 remaining=0
+[2025-09-11 04:15:17] Connection dropped while waiting header
+[2025-09-11 04:15:17] Connection closed
+[2025-09-11 04:15:17] Accepted connection from 127.0.0.1:43934
+[2025-09-11 04:15:17] HELLO -> new image id = 6717007b-03ac-4250-8a5d-68f1e9050abb
+[2025-09-11 04:15:17] IMAGE_INFO: id=6717007b-03ac-4250-8a5d-68f1e9050abb file=Verde.png size=829101 bytes chunks=13 proc=3 fmt=png
+[2025-09-11 04:15:17] IMAGE_COMPLETE: id=6717007b-03ac-4250-8a5d-68f1e9050abb file=Verde.png fmt=png chunks=13 remaining=0
+[2025-09-11 04:15:17] Connection dropped while waiting header
+[2025-09-11 04:15:17] Connection closed
+[2025-09-11 04:15:17] Accepted connection from 127.0.0.1:43948
+[2025-09-11 04:15:17] HELLO -> new image id = 917b76ee-12f0-4480-8152-c93b9bfe766e
+[2025-09-11 04:15:17] IMAGE_INFO: id=917b76ee-12f0-4480-8152-c93b9bfe766e file=verde-elmo.gif size=585446 bytes chunks=9 proc=3 fmt=gif
+[2025-09-11 04:15:18] IMAGE_COMPLETE: id=917b76ee-12f0-4480-8152-c93b9bfe766e file=verde-elmo.gif fmt=gif chunks=9 remaining=0
+[2025-09-11 04:15:18] Connection dropped while waiting header
+[2025-09-11 04:15:18] Connection closed
+[2025-09-11 04:21:17] Server starting (plain TCP) on port 1717
+[2025-09-11 04:21:17] Listening...
+[2025-09-11 04:21:38] Accepted connection from 127.0.0.1:47342
+[2025-09-11 04:21:38] HELLO -> new image id = 36c452fc-ef60-444b-a24d-419b1021ee77
+[2025-09-11 04:21:38] IMAGE_INFO: id=36c452fc-ef60-444b-a24d-419b1021ee77 file=Azul.png size=136733 bytes chunks=3 proc=3 fmt=png
+[2025-09-11 04:21:38] IMAGE_COMPLETE: id=36c452fc-ef60-444b-a24d-419b1021ee77 file=Azul.png fmt=png chunks=3 remaining=0
+[2025-09-11 04:21:38] Connection dropped while waiting header
+[2025-09-11 04:21:38] Connection closed
+[2025-09-11 04:21:38] Accepted connection from 127.0.0.1:47354
+[2025-09-11 04:21:38] HELLO -> new image id = 8080d999-04b9-442a-9df2-ecfaf97e6a5f
+[2025-09-11 04:21:38] IMAGE_INFO: id=8080d999-04b9-442a-9df2-ecfaf97e6a5f file=cine.gif size=645901 bytes chunks=10 proc=3 fmt=gif
+[2025-09-11 04:21:38] IMAGE_COMPLETE: id=8080d999-04b9-442a-9df2-ecfaf97e6a5f file=cine.gif fmt=gif chunks=10 remaining=0
+[2025-09-11 04:21:38] Connection dropped while waiting header
+[2025-09-11 04:21:38] Connection closed
+[2025-09-11 04:21:38] Accepted connection from 127.0.0.1:47368
+[2025-09-11 04:21:38] HELLO -> new image id = 67597962-baae-43b0-b9df-a8c21e0e2fe6
+[2025-09-11 04:21:38] IMAGE_INFO: id=67597962-baae-43b0-b9df-a8c21e0e2fe6 file=Histograma.png size=71952 bytes chunks=2 proc=3 fmt=png
+[2025-09-11 04:21:38] IMAGE_COMPLETE: id=67597962-baae-43b0-b9df-a8c21e0e2fe6 file=Histograma.png fmt=png chunks=2 remaining=0
+[2025-09-11 04:21:38] Connection dropped while waiting header
+[2025-09-11 04:21:38] Connection closed
+[2025-09-11 04:21:38] Accepted connection from 127.0.0.1:47370
+[2025-09-11 04:21:38] HELLO -> new image id = c612f490-684b-4bae-9b83-8b5dd30476b1
+[2025-09-11 04:21:38] IMAGE_INFO: id=c612f490-684b-4bae-9b83-8b5dd30476b1 file=Rojo.png size=80364 bytes chunks=2 proc=3 fmt=png
+[2025-09-11 04:21:38] IMAGE_COMPLETE: id=c612f490-684b-4bae-9b83-8b5dd30476b1 file=Rojo.png fmt=png chunks=2 remaining=0
+[2025-09-11 04:21:38] Connection dropped while waiting header
+[2025-09-11 04:21:38] Connection closed
+[2025-09-11 04:21:38] Accepted connection from 127.0.0.1:47378
+[2025-09-11 04:21:38] HELLO -> new image id = 6fbcf53c-5dfd-4cba-b385-ed0476657e45
+[2025-09-11 04:21:38] IMAGE_INFO: id=6fbcf53c-5dfd-4cba-b385-ed0476657e45 file=rojo-elmo.gif size=631341 bytes chunks=10 proc=3 fmt=gif
+[2025-09-11 04:21:38] IMAGE_COMPLETE: id=6fbcf53c-5dfd-4cba-b385-ed0476657e45 file=rojo-elmo.gif fmt=gif chunks=10 remaining=0
+[2025-09-11 04:21:38] Connection dropped while waiting header
+[2025-09-11 04:21:38] Connection closed
+[2025-09-11 04:21:38] Accepted connection from 127.0.0.1:47386
+[2025-09-11 04:21:38] HELLO -> new image id = 88c73573-68b2-4ac8-adbb-e219ebe04e14
+[2025-09-11 04:21:38] IMAGE_INFO: id=88c73573-68b2-4ac8-adbb-e219ebe04e14 file=Verde.png size=829101 bytes chunks=13 proc=3 fmt=png
+[2025-09-11 04:21:38] IMAGE_COMPLETE: id=88c73573-68b2-4ac8-adbb-e219ebe04e14 file=Verde.png fmt=png chunks=13 remaining=0
+[2025-09-11 04:21:38] Connection dropped while waiting header
+[2025-09-11 04:21:38] Connection closed
+[2025-09-11 04:21:38] Accepted connection from 127.0.0.1:47392
+[2025-09-11 04:21:38] HELLO -> new image id = 93f66521-23d6-4ca2-9553-091ed685cbe1
+[2025-09-11 04:21:38] IMAGE_INFO: id=93f66521-23d6-4ca2-9553-091ed685cbe1 file=verde-elmo.gif size=585446 bytes chunks=9 proc=3 fmt=gif
+[2025-09-11 04:21:38] IMAGE_COMPLETE: id=93f66521-23d6-4ca2-9553-091ed685cbe1 file=verde-elmo.gif fmt=gif chunks=9 remaining=0
+[2025-09-11 04:21:38] Connection dropped while waiting header
+[2025-09-11 04:21:38] Connection closed
+[2025-09-11 04:22:01] TLS enabled (listening TLS) on port 1717
+[2025-09-11 04:22:01] Listening...
+[2025-09-11 04:22:34] Accepted connection from 127.0.0.1:54104
+[2025-09-11 04:22:34] HELLO -> new image id = 562925f3-67cd-48b3-83a1-672a1d7d4706
+[2025-09-11 04:22:34] IMAGE_INFO: id=562925f3-67cd-48b3-83a1-672a1d7d4706 file=Azul.png size=136733 bytes chunks=3 proc=3 fmt=png
+[2025-09-11 04:22:34] IMAGE_COMPLETE: id=562925f3-67cd-48b3-83a1-672a1d7d4706 file=Azul.png fmt=png chunks=3 remaining=0
+[2025-09-11 04:22:34] Connection dropped while waiting header
+[2025-09-11 04:22:34] Connection closed
+[2025-09-11 04:22:34] Accepted connection from 127.0.0.1:54106
+[2025-09-11 04:22:34] HELLO -> new image id = a4dbefaf-b9c1-43fe-95a5-34b782e00964
+[2025-09-11 04:22:34] IMAGE_INFO: id=a4dbefaf-b9c1-43fe-95a5-34b782e00964 file=cine.gif size=645901 bytes chunks=10 proc=3 fmt=gif
+[2025-09-11 04:22:34] IMAGE_COMPLETE: id=a4dbefaf-b9c1-43fe-95a5-34b782e00964 file=cine.gif fmt=gif chunks=10 remaining=0
+[2025-09-11 04:22:34] Connection dropped while waiting header
+[2025-09-11 04:22:34] Connection closed
+[2025-09-11 04:22:34] Accepted connection from 127.0.0.1:54114
+[2025-09-11 04:22:34] HELLO -> new image id = c2bac6ab-e664-4ff1-b98c-97120196474f
+[2025-09-11 04:22:34] IMAGE_INFO: id=c2bac6ab-e664-4ff1-b98c-97120196474f file=Histograma.png size=71952 bytes chunks=2 proc=3 fmt=png
+[2025-09-11 04:22:34] IMAGE_COMPLETE: id=c2bac6ab-e664-4ff1-b98c-97120196474f file=Histograma.png fmt=png chunks=2 remaining=0
+[2025-09-11 04:22:34] Connection dropped while waiting header
+[2025-09-11 04:22:34] Connection closed
+[2025-09-11 04:22:34] Accepted connection from 127.0.0.1:54116
+[2025-09-11 04:22:34] HELLO -> new image id = e1f3a635-75a8-4cbc-acde-f3133c536ef4
+[2025-09-11 04:22:34] IMAGE_INFO: id=e1f3a635-75a8-4cbc-acde-f3133c536ef4 file=Rojo.png size=80364 bytes chunks=2 proc=3 fmt=png
+[2025-09-11 04:22:34] IMAGE_COMPLETE: id=e1f3a635-75a8-4cbc-acde-f3133c536ef4 file=Rojo.png fmt=png chunks=2 remaining=0
+[2025-09-11 04:22:34] Connection dropped while waiting header
+[2025-09-11 04:22:34] Connection closed
+[2025-09-11 04:22:34] Accepted connection from 127.0.0.1:54130
+[2025-09-11 04:22:34] HELLO -> new image id = a348ccd0-afb4-4eca-876d-7cad809deb0b
+[2025-09-11 04:22:34] IMAGE_INFO: id=a348ccd0-afb4-4eca-876d-7cad809deb0b file=rojo-elmo.gif size=631341 bytes chunks=10 proc=3 fmt=gif
+[2025-09-11 04:22:34] IMAGE_COMPLETE: id=a348ccd0-afb4-4eca-876d-7cad809deb0b file=rojo-elmo.gif fmt=gif chunks=10 remaining=0
+[2025-09-11 04:22:34] Connection dropped while waiting header
+[2025-09-11 04:22:34] Connection closed
+[2025-09-11 04:22:34] Accepted connection from 127.0.0.1:54134
+[2025-09-11 04:22:34] HELLO -> new image id = a4d60b34-2b80-439c-8c09-2ad60da57456
+[2025-09-11 04:22:34] IMAGE_INFO: id=a4d60b34-2b80-439c-8c09-2ad60da57456 file=Verde.png size=829101 bytes chunks=13 proc=3 fmt=png
+[2025-09-11 04:22:34] IMAGE_COMPLETE: id=a4d60b34-2b80-439c-8c09-2ad60da57456 file=Verde.png fmt=png chunks=13 remaining=0
+[2025-09-11 04:22:34] Connection dropped while waiting header
+[2025-09-11 04:22:34] Connection closed
+[2025-09-11 04:22:34] Accepted connection from 127.0.0.1:54138
+[2025-09-11 04:22:34] HELLO -> new image id = d042f4ed-9b28-49e4-b470-22aee42d735d
+[2025-09-11 04:22:34] IMAGE_INFO: id=d042f4ed-9b28-49e4-b470-22aee42d735d file=verde-elmo.gif size=585446 bytes chunks=9 proc=3 fmt=gif
+[2025-09-11 04:22:34] IMAGE_COMPLETE: id=d042f4ed-9b28-49e4-b470-22aee42d735d file=verde-elmo.gif fmt=gif chunks=9 remaining=0
+[2025-09-11 04:22:34] Connection dropped while waiting header
+[2025-09-11 04:22:34] Connection closed
