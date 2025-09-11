@@ -164,3 +164,68 @@ void process_image(const char* input_path, const char* image_id,
     // Process static images (PNG/JPG/JPEG)
     process_static_image(input_path, image_id, filename, format, processing_type);
 }
+
+void process_image_from_memory(const unsigned char* data, size_t size,
+                               const char* image_id, const char* filename,
+                               const char* format, ProcessingType processing_type) {
+    if (!data || size == 0 || !format) return;
+
+    // GIF: canalizar a pipeline de GIF en memoria
+    if (format && (strcasecmp(format, "gif") == 0)) {
+        process_gif_image_from_memory(data, (int)size, image_id, filename, processing_type);
+        return;
+    }
+
+    // PNG/JPG/JPEG: usar stbi_load_from_memory
+    int width = 0, height = 0, channels = 0;
+    unsigned char* img_data = stbi_load_from_memory(data, (int)size, &width, &height, &channels, 0);
+    if (!img_data) {
+        log_line("Failed to load image from memory (fmt=%s)", format);
+        return;
+    }
+
+    log_line("Processing (memory) %s: %dx%d, %d ch, type=%u (static)",
+             image_id, width, height, channels, processing_type);
+
+    // Clasificación por color
+    if (processing_type == PROC_COLOR_CLASSIFICATION || processing_type == PROC_BOTH) {
+        char dominant_color = classify_image_by_color(img_data, width, height, channels);
+        const char* color_dir = g_cfg.colors_red;
+        const char* cname = "red";
+        if (dominant_color == 'g') { color_dir = g_cfg.colors_green; cname = "green"; }
+        else if (dominant_color == 'b') { color_dir = g_cfg.colors_blue; cname = "blue"; }
+
+        char color_path[1024];
+        snprintf(color_path, sizeof(color_path), "%s/%s_%s",
+                 color_dir, image_id, filename);
+
+        if (save_image(color_path, img_data, width, height, channels, format)) {
+            log_line("Color classification (memory): saved to %s (dominant: %s)", color_path, cname);
+        } else {
+            log_line("Failed to save color-classified image to %s", color_path);
+        }
+    }
+
+    // Ecualización de histograma
+    if (processing_type == PROC_HISTOGRAM || processing_type == PROC_BOTH) {
+        size_t img_size = (size_t)width * height * channels;
+        unsigned char* hist_data = (unsigned char*)malloc(img_size);
+        if (hist_data) {
+            memcpy(hist_data, img_data, img_size);
+            apply_histogram_equalization(hist_data, width, height, channels);
+
+            char hist_path[1024];
+            snprintf(hist_path, sizeof(hist_path), "%s/%s_%s",
+                     g_cfg.histogram_dir, image_id, filename);
+
+            if (save_image(hist_path, hist_data, width, height, channels, format)) {
+                log_line("Histogram equalization (memory): saved to %s", hist_path);
+            } else {
+                log_line("Failed to save histogram-equalized image to %s", hist_path);
+            }
+            free(hist_data);
+        }
+    }
+
+    stbi_image_free(img_data);
+}

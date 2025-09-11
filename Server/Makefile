@@ -14,7 +14,8 @@ SOURCES = $(SRCDIR)/main.c \
           $(SRCDIR)/utils.c \
           $(SRCDIR)/image_processing.c \
           $(SRCDIR)/gif_processing.c \
-          $(SRCDIR)/server.c
+          $(SRCDIR)/server.c \
+          $(SRCDIR)/scheduler.c
 
 # Object files
 OBJECTS = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SOURCES))
@@ -26,20 +27,6 @@ all: check-stb check-gif $(OBJDIR) $(TARGET)
 # Create object directory
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
-
-check-stb:
-	@if [ ! -f $(SRCDIR)/stb_image.h ] || [ ! -f $(SRCDIR)/stb_image_write.h ]; then \
-		echo "STB headers not found. Running download script..."; \
-		chmod +x download_stb.sh; \
-		./download_stb.sh; \
-	fi
-
-check-gif:
-	@if [ ! -f $(SRCDIR)/gif.h ]; then \
-		echo "gif.h not found. Running download script..."; \
-		chmod +x download_gif.sh; \
-		./download_gif.sh; \
-	fi
 
 $(TARGET): $(OBJECTS)
 	$(CC) $(OBJECTS) -o $(TARGET) $(LIBS)
@@ -58,7 +45,6 @@ clean-all: clean
 
 setup:
 	mkdir -p assets \
-	         assets/incoming \
 	         assets/histogram \
 	         assets/colors/red \
 	         assets/colors/green \
@@ -80,7 +66,6 @@ setup:
 		'  },' \
 		'  "paths": {' \
 		'    "log_file": "assets/log.txt",' \
-		'    "incoming_dir": "assets/incoming",' \
 		'    "histogram_dir": "assets/histogram",' \
 		'    "colors_dir": {' \
 		'      "red": "assets/colors/red",' \

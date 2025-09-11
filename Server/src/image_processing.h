@@ -2,28 +2,24 @@
 #define IMAGE_PROCESSING_H
 
 #include <stdint.h>
+#include <stddef.h>
 #include "protocol.h"
 
-// Determine dominant color channel (R, G, or B)
-// Returns: 'r', 'g', or 'b'
 char classify_image_by_color(unsigned char* data, int width, int height, int channels);
-
-// Apply histogram equalization to improve contrast
 void apply_histogram_equalization(unsigned char* data, int width, int height, int channels);
+int  save_image(const char* path, unsigned char* data, int width, int height, int channels, const char* format);
 
-// Save image to file in specified format
-// Returns: 1 on success, 0 on failure
-int save_image(const char* path, unsigned char* data, int width, int height, 
-               int channels, const char* format);
-
-// Process static image (non-GIF) based on processing type
+// EXISTENTE (desde path)
 void process_static_image(const char* input_path, const char* image_id,
-                          const char* filename, const char* format,
-                          ProcessingType processing_type);
-
-// Main image processing entry point
+                         const char* filename, const char* format,
+                         ProcessingType processing_type);
 void process_image(const char* input_path, const char* image_id,
-                   const char* filename, const char* format,
-                   ProcessingType processing_type);
+                  const char* filename, const char* format,
+                  ProcessingType processing_type);
+
+// NUEVO: procesar desde memoria (sin escribir a incoming)
+void process_image_from_memory(const unsigned char* data, size_t size,
+                               const char* image_id, const char* filename,
+                               const char* format, ProcessingType processing_type);
 
 #endif // IMAGE_PROCESSING_H

@@ -4,6 +4,7 @@
 #include "logging.h"
 #include "server.h"
 #include "connection.h"
+#include "scheduler.h"
 
 // Global configuration instance
 ServerConfig g_cfg;
@@ -30,10 +31,18 @@ int main(void) {
         return 1;
     }
 
-    // Start the server
+    // ---- Iniciar scheduler (worker que escucha y procesa por tamaño) ----
+    if (scheduler_init() != 0) {
+        fprintf(stderr, "Failed to start scheduler worker\n");
+        log_close();
+        return 1;
+    }
+
+    // Start the server (acepta conexiones y encola trabajos)
     int result = start_server();
 
     // Cleanup
+    scheduler_shutdown();   // <--- parar worker y liberar heap
     tls_cleanup();
     log_close();
     

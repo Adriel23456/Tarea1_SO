@@ -223,3 +223,91 @@ void process_gif_image(const char* input_path, const char* image_id,
     stbi_image_free(all);
     if (delays) free(delays);
 }
+
+void process_gif_image_from_memory(const unsigned char* data, int len,
+                                  const char* image_id, const char* filename,
+                                  ProcessingType processing_type) {
+    if (!data || len <= 0) return;
+
+    int w = 0, h = 0, frames = 0, comp = 0;
+    int* delays = NULL; // centiseconds
+    unsigned char* all = stbi_load_gif_from_memory((unsigned char*)data, len, &delays,
+                                                   &w, &h, &frames, &comp, 4 /* RGBA */);
+    if (!all || frames <= 0 || w <= 0 || h <= 0) {
+        log_line("GIF (memory): failed to decode frames");
+        if (all) stbi_image_free(all);
+        if (delays) free(delays);
+        return;
+    }
+
+    size_t frame_stride = (size_t)w * h * 4;
+
+    if (processing_type == PROC_COLOR_CLASSIFICATION || processing_type == PROC_BOTH) {
+        unsigned long long r_sum = 0, g_sum = 0, b_sum = 0;
+        size_t pixcount = (size_t)w * h;
+        for (int f = 0; f < frames; ++f) {
+            unsigned char* frame = all + f * frame_stride;
+            for (size_t i = 0; i < pixcount; ++i) {
+                r_sum += frame[i*4 + 0];
+                g_sum += frame[i*4 + 1];
+                b_sum += frame[i*4 + 2];
+            }
+        }
+
+        const char* color_dir = g_cfg.colors_red;
+        const char* cname = "red";
+        if (g_sum >= r_sum && g_sum >= b_sum) { color_dir = g_cfg.colors_green; cname = "green"; }
+        else if (b_sum >= r_sum && b_sum >= g_sum) { color_dir = g_cfg.colors_blue; cname = "blue"; }
+
+        char out_path[1024];
+        const char* ext = ".gif";
+        snprintf(out_path, sizeof(out_path), "%s/%s_%s%s",
+                 color_dir, image_id, filename,
+                 (strstr(filename, ".gif") || strstr(filename, ".GIF")) ? "" : ext);
+
+        unsigned char** frame_ptrs = (unsigned char**)malloc(sizeof(unsigned char*) * frames);
+        if (!frame_ptrs) {
+            log_line("GIF (memory): OOM frame_ptrs (classification)");
+        } else {
+            for (int f = 0; f < frames; ++f) frame_ptrs[f] = all + f * frame_stride;
+            if (write_gif_animation(out_path, frame_ptrs, delays, frames, w, h)) {
+                log_line("Color classification GIF (memory): saved to %s (dominant %s)", out_path, cname);
+            } else {
+                log_line("Color classification GIF (memory): failed to write %s", out_path);
+            }
+            free(frame_ptrs);
+        }
+    }
+
+    if (processing_type == PROC_HISTOGRAM || processing_type == PROC_BOTH) {
+        unsigned char** out_frames = (unsigned char**)malloc(sizeof(unsigned char*) * frames);
+        if (!out_frames) {
+            log_line("GIF (memory): OOM out_frames (histogram)");
+        } else {
+            for (int f = 0; f < frames; ++f) {
+                unsigned char* src = all + f * frame_stride;
+                unsigned char* dst = (unsigned char*)malloc(frame_stride);
+                if (!dst) { out_frames[f] = NULL; continue; }
+                memcpy(dst, src, frame_stride);
+                apply_histogram_equalization(dst, w, h, 4);
+                out_frames[f] = dst;
+            }
+
+            char out_path[1024];
+            const char* ext = ".gif";
+            snprintf(out_path, sizeof(out_path), "%s/%s_%s%s",
+                     g_cfg.histogram_dir, image_id, filename,
+                     (strstr(filename, ".gif") || strstr(filename, ".GIF")) ? "" : ext);
+
+            int ok = write_gif_animation(out_path, out_frames, delays, frames, w, h);
+            if (ok) log_line("Histogram equalization GIF (memory): saved to %s", out_path);
+            else    log_line("Histogram equalization GIF (memory): failed to write %s", out_path);
+
+            for (int f = 0; f < frames; ++f) free(out_frames[f]);
+            free(out_frames);
+        }
+    }
+
+    stbi_image_free(all);
+    if (delays) free(delays);
+}

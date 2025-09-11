@@ -11,16 +11,13 @@ void set_default_config(ServerConfig* c) {
     c->tls_enabled = 0;
     strncpy(c->tls_dir,      "assets/tls",        sizeof(c->tls_dir));
     strncpy(c->log_file,     "assets/log.txt",    sizeof(c->log_file));
-    strncpy(c->incoming_dir, "assets/incoming",   sizeof(c->incoming_dir));
     strncpy(c->histogram_dir,"assets/histogram",  sizeof(c->histogram_dir));
     strncpy(c->colors_red,   "assets/colors/red", sizeof(c->colors_red));
     strncpy(c->colors_green, "assets/colors/green", sizeof(c->colors_green));
     strncpy(c->colors_blue,  "assets/colors/blue", sizeof(c->colors_blue));
-    
-    // Ensure null termination
+
     c->tls_dir[sizeof(c->tls_dir)-1] = '\0';
     c->log_file[sizeof(c->log_file)-1] = '\0';
-    c->incoming_dir[sizeof(c->incoming_dir)-1] = '\0';
     c->histogram_dir[sizeof(c->histogram_dir)-1] = '\0';
     c->colors_red[sizeof(c->colors_red)-1] = '\0';
     c->colors_green[sizeof(c->colors_green)-1] = '\0';
@@ -75,57 +72,48 @@ int load_config_json(const char* path, ServerConfig* c) {
 
     // Parse paths section
     if (json_object_object_get_ex(root, "paths", &js_paths)) {
-        struct json_object *jlog = NULL, *jincoming = NULL, *jhist = NULL, *jcolors = NULL;
-        
+        struct json_object *jlog = NULL, *jhist = NULL, *jcolors = NULL;
+
         if (json_object_object_get_ex(js_paths, "log_file", &jlog)) {
             const char* s = json_object_get_string(jlog);
-            if (s) { 
-                strncpy(c->log_file, s, sizeof(c->log_file)-1); 
-                c->log_file[sizeof(c->log_file)-1] = '\0'; 
+            if (s) {
+                strncpy(c->log_file, s, sizeof(c->log_file)-1);
+                c->log_file[sizeof(c->log_file)-1] = '\0';
             }
         }
-        
-        if (json_object_object_get_ex(js_paths, "incoming_dir", &jincoming)) {
-            const char* s = json_object_get_string(jincoming);
-            if (s) { 
-                strncpy(c->incoming_dir, s, sizeof(c->incoming_dir)-1); 
-                c->incoming_dir[sizeof(c->incoming_dir)-1] = '\0'; 
-            }
-        }
-        
+
         if (json_object_object_get_ex(js_paths, "histogram_dir", &jhist)) {
             const char* s = json_object_get_string(jhist);
-            if (s) { 
-                strncpy(c->histogram_dir, s, sizeof(c->histogram_dir)-1); 
-                c->histogram_dir[sizeof(c->histogram_dir)-1] = '\0'; 
+            if (s) {
+                strncpy(c->histogram_dir, s, sizeof(c->histogram_dir)-1);
+                c->histogram_dir[sizeof(c->histogram_dir)-1] = '\0';
             }
         }
-        
-        // Parse color directories
+
         if (json_object_object_get_ex(js_paths, "colors_dir", &jcolors)) {
             struct json_object *jr=NULL, *jg=NULL, *jb=NULL;
-            
+
             if (json_object_object_get_ex(jcolors, "red", &jr)) {
                 const char* s = json_object_get_string(jr);
-                if (s) { 
-                    strncpy(c->colors_red, s, sizeof(c->colors_red)-1); 
-                    c->colors_red[sizeof(c->colors_red)-1] = '\0'; 
+                if (s) {
+                    strncpy(c->colors_red, s, sizeof(c->colors_red)-1);
+                    c->colors_red[sizeof(c->colors_red)-1] = '\0';
                 }
             }
-            
+
             if (json_object_object_get_ex(jcolors, "green", &jg)) {
                 const char* s = json_object_get_string(jg);
-                if (s) { 
-                    strncpy(c->colors_green, s, sizeof(c->colors_green)-1); 
-                    c->colors_green[sizeof(c->colors_green)-1] = '\0'; 
+                if (s) {
+                    strncpy(c->colors_green, s, sizeof(c->colors_green)-1);
+                    c->colors_green[sizeof(c->colors_green)-1] = '\0';
                 }
             }
-            
+
             if (json_object_object_get_ex(jcolors, "blue", &jb)) {
                 const char* s = json_object_get_string(jb);
-                if (s) { 
-                    strncpy(c->colors_blue, s, sizeof(c->colors_blue)-1); 
-                    c->colors_blue[sizeof(c->colors_blue)-1] = '\0'; 
+                if (s) {
+                    strncpy(c->colors_blue, s, sizeof(c->colors_blue)-1);
+                    c->colors_blue[sizeof(c->colors_blue)-1] = '\0';
                 }
             }
         }
@@ -136,16 +124,11 @@ int load_config_json(const char* path, ServerConfig* c) {
 }
 
 int ensure_dirs_from_config(const ServerConfig* c) {
-    // Create parent directory for log file
     if (ensure_parent_dir(c->log_file) != 0) return -1;
-    
-    // Create all required directories
-    if (mkdir_p(c->incoming_dir, 0755) != 0) return -1;
     if (mkdir_p(c->histogram_dir, 0755) != 0) return -1;
     if (mkdir_p(c->colors_red, 0755) != 0) return -1;
     if (mkdir_p(c->colors_green, 0755) != 0) return -1;
     if (mkdir_p(c->colors_blue, 0755) != 0) return -1;
     if (mkdir_p(c->tls_dir, 0755) != 0) return -1;
-    
     return 0;
 }

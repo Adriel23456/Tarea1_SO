@@ -53,7 +53,6 @@ have_jq() {
 
 ensure_dirs() {
   mkdir -p assets \
-           assets/incoming \
            assets/histogram \
            assets/colors/red \
            assets/colors/green \
@@ -73,7 +72,6 @@ write_default_config_if_missing() {
   },
   "paths": {
     "log_file": "assets/log.txt",
-    "incoming_dir": "assets/incoming",
     "histogram_dir": "assets/histogram",
     "colors_dir": {
       "red": "assets/colors/red",

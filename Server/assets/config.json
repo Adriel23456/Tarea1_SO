@@ -6,7 +6,6 @@
   },
   "paths": {
     "log_file": "assets/log.txt",
-    "incoming_dir": "assets/incoming",
     "histogram_dir": "assets/histogram",
     "colors_dir": {
       "red": "assets/colors/red",
