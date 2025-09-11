@@ -201,14 +201,21 @@ static int send_one_image(const char* filepath,
                           ProgressCallback cb) {
     // 1) Conectar
     if (cb) cb("Connecting to server...", 0.0);
-    gboolean want_tls = (cfg->protocol && !g_ascii_strcasecmp(cfg->protocol, "https")==0);
+    gboolean want_tls = (cfg->protocol && g_ascii_strcasecmp(cfg->protocol, "https") == 0);
     NetStream ns;
     if (connect_with_retry(cfg->host, cfg->port,
                            cfg->connect_timeout,
                            cfg->max_retries,
                            cfg->retry_backoff_ms,
                            &ns, want_tls) != 0) {
-        if (cb) cb("Connection failed", 0.0);
+        if (cb) {
+            char dbg[256];
+            g_snprintf(dbg, sizeof(dbg),
+                    "Connecting to %s://%s:%d (chunk=%d, timeout=%ds, retries=%d)...",
+                    want_tls ? "https" : "http",
+                    cfg->host, cfg->port, cfg->chunk_size, cfg->connect_timeout, cfg->max_retries);
+            cb(dbg, 0.0);
+        }
         return -1;
     }
 
