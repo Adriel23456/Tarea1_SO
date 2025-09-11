@@ -14,6 +14,7 @@
 #include <sys/socket.h>
 #include <time.h>
 #include <sys/stat.h>
+#include <stdarg.h>
 #include "protocol.h"
 
 #define LISTEN_PORT DEFAULT_PORT

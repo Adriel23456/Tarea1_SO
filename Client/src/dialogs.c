@@ -77,19 +77,19 @@ void show_config_dialog(GtkWindow *parent) {
     } else {
         // Create default configuration
         const char *default_config = 
-            "{\n"
-            "  \"server\": {\n"
-            "    \"host\": \"localhost\",\n"
-            "    \"port\": 1717,\n"
-            "    \"protocol\": \"http\"\n"
-            "  },\n"
-            "  \"client\": {\n"
-            "    \"chunk_size\": 65536,\n"
-            "    \"connect_timeout\": 10,\n"
-            "    \"max_retries\": 3,\n"
-            "    \"retry_backoff_ms\": 500\n"
-            "  }\n"
-            "}";
+        "{\n"
+        "  \"server\": {\n"
+        "    \"host\": \"localhost\",\n"
+        "    \"port\": 1717,\n"
+        "    \"protocol\": \"http\"\n"
+        "  },\n"
+        "  \"client\": {\n"
+        "    \"chunk_size\": 65536,\n"
+        "    \"connect_timeout\": 10,\n"
+        "    \"max_retries\": 3,\n"
+        "    \"retry_backoff_ms\": 500\n"
+        "  }\n"
+        "}";
         gtk_text_buffer_set_text(buffer, default_config, -1);
         if (error) {
             g_error_free(error);

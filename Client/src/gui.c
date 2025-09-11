@@ -27,47 +27,63 @@ static void send_progress_callback(const char* message, double progress) {
     printf("%s (%.0f%%)\n", message, progress * 100);
 }
 
-// Thread function for sending
+// --- NUEVA VERSION ---
 static gpointer send_thread_func(gpointer data) {
     SendDialogData *dialog_data = (SendDialogData*)data;
-    
-    // Load config
-    const char* host = "localhost";
-    int port = DEFAULT_PORT;
-    
-    // Try to read from config file
+
+    // Config por defecto
+    NetConfig cfg = {
+        .host = "localhost",
+        .port = DEFAULT_PORT,
+        .protocol = "http",
+        .chunk_size = DEFAULT_CHUNK_SIZE,
+        .connect_timeout = 10,
+        .max_retries = 3,
+        .retry_backoff_ms = 500
+    };
+
+    // Leer assets/connection.json
     FILE* fp = fopen("assets/connection.json", "r");
     if (fp) {
         fseek(fp, 0, SEEK_END);
         long size = ftell(fp);
         fseek(fp, 0, SEEK_SET);
-        
+
         char* json_str = malloc(size + 1);
         fread(json_str, 1, size, fp);
         json_str[size] = '\0';
         fclose(fp);
-        
+
         struct json_object* root = json_tokener_parse(json_str);
         if (root) {
-            struct json_object* server_obj;
+            struct json_object *server_obj, *client_obj;
             if (json_object_object_get_ex(root, "server", &server_obj)) {
-                struct json_object* host_obj, *port_obj;
-                if (json_object_object_get_ex(server_obj, "host", &host_obj)) {
-                    host = json_object_get_string(host_obj);
-                }
-                if (json_object_object_get_ex(server_obj, "port", &port_obj)) {
-                    port = json_object_get_int(port_obj);
-                }
+                struct json_object *host_obj, *port_obj, *proto_obj;
+                if (json_object_object_get_ex(server_obj, "host", &host_obj))
+                    cfg.host = json_object_get_string(host_obj);
+                if (json_object_object_get_ex(server_obj, "port", &port_obj))
+                    cfg.port = json_object_get_int(port_obj);
+                if (json_object_object_get_ex(server_obj, "protocol", &proto_obj))
+                    cfg.protocol = json_object_get_string(proto_obj);
+            }
+            if (json_object_object_get_ex(root, "client", &client_obj)) {
+                struct json_object *chunk_obj, *cto_obj, *mr_obj, *rb_obj;
+                if (json_object_object_get_ex(client_obj, "chunk_size", &chunk_obj))
+                    cfg.chunk_size = json_object_get_int(chunk_obj);
+                if (json_object_object_get_ex(client_obj, "connect_timeout", &cto_obj))
+                    cfg.connect_timeout = json_object_get_int(cto_obj);
+                if (json_object_object_get_ex(client_obj, "max_retries", &mr_obj))
+                    cfg.max_retries = json_object_get_int(mr_obj);
+                if (json_object_object_get_ex(client_obj, "retry_backoff_ms", &rb_obj))
+                    cfg.retry_backoff_ms = json_object_get_int(rb_obj);
             }
             json_object_put(root);
         }
         free(json_str);
     }
-    
-    // Send images
-    int result = send_all_images(dialog_data->image_list, host, port, 
+
+    int result = send_all_images(dialog_data->image_list, &cfg,
                                  dialog_data->proc_type, send_progress_callback);
-    
     return GINT_TO_POINTER(result);
 }
 

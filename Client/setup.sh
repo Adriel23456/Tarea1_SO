@@ -27,11 +27,11 @@ install_dependencies() {
     
     if [[ "$OS" == *"Ubuntu"* ]] || [[ "$OS" == *"Debian"* ]]; then
         sudo apt update
-        sudo apt install -y build-essential pkg-config libgtk-4-dev git libjson-c-dev
+        sudo apt install -y build-essential pkg-config libgtk-4-dev git libjson-c-dev libssl-dev uuid-dev
     elif [[ "$OS" == *"Fedora"* ]]; then
-        sudo dnf install -y gcc gtk4-devel pkg-config git make json-c-devel
+        sudo dnf install -y gcc gtk4-devel pkg-config git make json-c-devel openssl-devel libuuid-devel
     elif [[ "$OS" == *"Arch"* ]]; then
-        sudo pacman -Syu --noconfirm base-devel gtk4 pkg-config git json-c
+        sudo pacman -Syu --noconfirm base-devel gtk4 pkg-config git json-c openssl util-linux-libs
     else
         echo "Unsupported distribution. Please install manually:"
         echo "  - GCC compiler"
