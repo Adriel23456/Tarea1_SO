@@ -2,6 +2,7 @@
     "files.associations": {
         "stdint.h": "c",
         "dialogs.h": "c",
-        "gui.h": "c"
+        "gui.h": "c",
+        "protocol.h": "c"
     }
 }

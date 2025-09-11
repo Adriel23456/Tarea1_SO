@@ -84,8 +84,10 @@ void show_config_dialog(GtkWindow *parent) {
             "    \"protocol\": \"http\"\n"
             "  },\n"
             "  \"client\": {\n"
-            "    \"timeout\": 30,\n"
-            "    \"max_retries\": 3\n"
+            "    \"chunk_size\": 65536,\n"
+            "    \"connect_timeout\": 10,\n"
+            "    \"max_retries\": 3,\n"
+            "    \"retry_backoff_ms\": 500\n"
             "  }\n"
             "}";
         gtk_text_buffer_set_text(buffer, default_config, -1);

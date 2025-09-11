@@ -3,7 +3,7 @@
 
 CC = gcc
 CFLAGS = `pkg-config --cflags gtk4 json-c` -Wall -Wextra -g
-LIBS = `pkg-config --libs gtk4 json-c`
+LIBS = `pkg-config --libs gtk4 json-c` -luuid -lssl -lcrypto
 
 # Source files
 SRCDIR = src
