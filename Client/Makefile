@@ -45,11 +45,21 @@ install-deps:
 run: $(TARGET)
 	./$(TARGET)
 
-# Create default configuration files
+# Create default configuration files (only if they don't exist)
 setup: dirs
-	@echo '{\n  "server": {\n    "host": "localhost",\n    "port": 1717,\n    "protocol": "http"\n  },\n  "client": {\n    "timeout": 30,\n    "max_retries": 3\n  }\n}' > assets/connection.json
-	@echo 'IMAGE PROCESSING CLIENT\n=======================\n\nVersion 1.0.0\n\nDeveloped for Systems Operations Course\n\n© 2024' > assets/credits.txt
-	@echo "Setup complete! Configuration files created in assets/"
+	@if [ ! -f assets/connection.json ]; then \
+		echo '{\n  "server": {\n    "host": "localhost",\n    "port": 1717,\n    "protocol": "http"\n  },\n  "client": {\n    "timeout": 30,\n    "max_retries": 3\n  }\n}' > assets/connection.json; \
+		echo "Created default assets/connection.json"; \
+	else \
+		echo "assets/connection.json already exists, skipping..."; \
+	fi
+	@if [ ! -f assets/credits.txt ]; then \
+		echo 'IMAGE PROCESSING CLIENT\n=======================\n\nVersion 1.0.0\n\nDeveloped for Systems Operations Course\n\n© 2024' > assets/credits.txt; \
+		echo "Created default assets/credits.txt"; \
+	else \
+		echo "assets/credits.txt already exists, skipping..."; \
+	fi
+	@echo "Setup complete!"
 
 # Full build: clean, setup, and compile
 rebuild: clean setup all

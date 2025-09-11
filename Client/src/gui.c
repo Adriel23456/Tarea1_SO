@@ -17,6 +17,8 @@ static AppData *g_app_data = NULL;
  * Application activation callback
  */
 void on_app_activate(GtkApplication *app, gpointer user_data) {
+    (void)user_data; // Suppress unused parameter warning
+    
     AppData *app_data = g_malloc(sizeof(AppData));
     app_data->app = app;
     app_data->loaded_images = NULL;
@@ -124,15 +126,34 @@ void create_main_window(AppData *app_data) {
     GtkCssProvider *css_provider = gtk_css_provider_new();
     const char *css = 
         ".boxed-list { "
-        "  background-color: #f6f5f4; "
+        "  background-color: #ffffff; "
         "  border-radius: 8px; "
+        "  border: 1px solid #d0d0d0; "
         "} "
         ".image-row { "
         "  padding: 10px; "
         "  border-bottom: 1px solid #e0e0e0; "
+        "  background-color: #ffffff; "
         "} "
         ".image-row:hover { "
-        "  background-color: #e8e8e8; "
+        "  background-color: #f0f0f0; "
+        "} "
+        ".image-row label { "
+        "  color: #2c3e50; "
+        "  font-weight: 500; "
+        "} "
+        ".image-row label:last-child { "
+        "  color: #7f8c8d; "
+        "  font-weight: normal; "
+        "} "
+        "list row { "
+        "  background-color: transparent; "
+        "} "
+        "list row:selected { "
+        "  background-color: #3498db; "
+        "} "
+        "list row:selected label { "
+        "  color: #ffffff; "
         "} ";
     
     gtk_css_provider_load_from_string(css_provider, css);
@@ -150,13 +171,14 @@ void create_main_window(AppData *app_data) {
  * Load button callback - Opens file chooser for image selection
  */
 void on_load_button_clicked(GtkWidget *button, gpointer user_data) {
+    (void)button; // Suppress unused parameter warning
     AppData *app_data = (AppData *)user_data;
     GtkFileDialog *dialog;
     GtkFileFilter *filter;
     
     // Create file dialog
     dialog = gtk_file_dialog_new();
-    gtk_file_dialog_set_title(dialog, "Select Image Files");
+    gtk_file_dialog_set_title(dialog, "Select Image Files (Use Ctrl/Shift for multiple)");
     gtk_file_dialog_set_modal(dialog, TRUE);
     
     // Create and set file filter for images
@@ -175,15 +197,16 @@ void on_load_button_clicked(GtkWidget *button, gpointer user_data) {
     g_list_store_append(filters, filter);
     gtk_file_dialog_set_filters(dialog, G_LIST_MODEL(filters));
     
-    // Open file dialog
-    gtk_file_dialog_open(dialog, GTK_WINDOW(app_data->window), NULL,
-                        (GAsyncReadyCallback)on_file_dialog_response, app_data);
+    // Open file dialog for MULTIPLE selection
+    gtk_file_dialog_open_multiple(dialog, GTK_WINDOW(app_data->window), NULL,
+                                 (GAsyncReadyCallback)on_file_dialog_multiple_response, app_data);
 }
 
 /**
  * Configuration button callback - Opens configuration editor
  */
 void on_config_button_clicked(GtkWidget *button, gpointer user_data) {
+    (void)button; // Suppress unused parameter warning
     AppData *app_data = (AppData *)user_data;
     show_config_dialog(GTK_WINDOW(app_data->window));
 }
@@ -192,6 +215,7 @@ void on_config_button_clicked(GtkWidget *button, gpointer user_data) {
  * Send images button callback - Will send images to server (placeholder for now)
  */
 void on_send_button_clicked(GtkWidget *button, gpointer user_data) {
+    (void)button; // Suppress unused parameter warning
     AppData *app_data = (AppData *)user_data;
     
     if (app_data->loaded_images == NULL) {
@@ -209,6 +233,7 @@ void on_send_button_clicked(GtkWidget *button, gpointer user_data) {
  * Credits button callback - Shows credits dialog
  */
 void on_credits_button_clicked(GtkWidget *button, gpointer user_data) {
+    (void)button; // Suppress unused parameter warning
     AppData *app_data = (AppData *)user_data;
     show_credits_dialog(GTK_WINDOW(app_data->window));
 }
@@ -217,6 +242,7 @@ void on_credits_button_clicked(GtkWidget *button, gpointer user_data) {
  * Exit button callback - Closes the application
  */
 void on_exit_button_clicked(GtkWidget *button, gpointer user_data) {
+    (void)button; // Suppress unused parameter warning
     AppData *app_data = (AppData *)user_data;
     
     // Clean up loaded images list
@@ -233,6 +259,7 @@ void on_exit_button_clicked(GtkWidget *button, gpointer user_data) {
  */
 void add_image_to_list(AppData *app_data, const char *filepath) {
     GtkWidget *row_box;
+    GtkWidget *icon_label;
     GtkWidget *label;
     GtkWidget *size_label;
     char *basename;
@@ -253,6 +280,10 @@ void add_image_to_list(AppData *app_data, const char *filepath) {
     gtk_widget_set_margin_top(row_box, 5);
     gtk_widget_set_margin_bottom(row_box, 5);
     
+    // Add an icon for the image
+    icon_label = gtk_label_new("🖼️");
+    gtk_widget_set_margin_end(icon_label, 5);
+    
     // Get basename for display
     basename = g_path_get_basename(filepath);
     
@@ -260,6 +291,8 @@ void add_image_to_list(AppData *app_data, const char *filepath) {
     label = gtk_label_new(basename);
     gtk_widget_set_hexpand(label, TRUE);
     gtk_widget_set_halign(label, GTK_ALIGN_START);
+    gtk_label_set_ellipsize(GTK_LABEL(label), PANGO_ELLIPSIZE_MIDDLE);
+    gtk_widget_set_tooltip_text(label, filepath); // Show full path on hover
     
     if (info) {
         goffset size = g_file_info_get_size(info);
@@ -278,7 +311,8 @@ void add_image_to_list(AppData *app_data, const char *filepath) {
     size_label = gtk_label_new(size_text);
     gtk_widget_set_opacity(size_label, 0.7);
     
-    // Add labels to row box
+    // Add widgets to row box
+    gtk_box_append(GTK_BOX(row_box), icon_label);
     gtk_box_append(GTK_BOX(row_box), label);
     gtk_box_append(GTK_BOX(row_box), size_label);
     

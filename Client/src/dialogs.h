@@ -13,7 +13,8 @@ void show_config_dialog(GtkWindow *parent);
 void show_credits_dialog(GtkWindow *parent);
 void show_message_dialog(GtkWindow *parent, const char *title, const char *message);
 
-// File dialog callback
+// File dialog callbacks
 void on_file_dialog_response(GtkFileDialog *dialog, GAsyncResult *result, gpointer user_data);
+void on_file_dialog_multiple_response(GtkFileDialog *dialog, GAsyncResult *result, gpointer user_data);
 
 #endif // DIALOGS_H

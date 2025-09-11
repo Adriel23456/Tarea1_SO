@@ -297,7 +297,7 @@ void show_message_dialog(GtkWindow *parent, const char *title, const char *messa
 }
 
 /**
- * File dialog response handler
+ * File dialog response handler (single file - kept for compatibility)
  */
 void on_file_dialog_response(GtkFileDialog *dialog, GAsyncResult *result, gpointer user_data) {
     AppData *app_data = (AppData *)user_data;
@@ -336,6 +336,78 @@ void on_file_dialog_response(GtkFileDialog *dialog, GAsyncResult *result, gpoint
     } else if (error) {
         if (error->code != G_IO_ERROR_CANCELLED) {
             g_printerr("Error opening file: %s\n", error->message);
+        }
+        g_error_free(error);
+    }
+    
+    g_object_unref(dialog);
+}
+
+/**
+ * File dialog response handler for multiple files
+ */
+void on_file_dialog_multiple_response(GtkFileDialog *dialog, GAsyncResult *result, gpointer user_data) {
+    AppData *app_data = (AppData *)user_data;
+    GListModel *files;
+    GError *error = NULL;
+    guint n_files;
+    int valid_count = 0;
+    int invalid_count = 0;
+    
+    files = gtk_file_dialog_open_multiple_finish(dialog, result, &error);
+    
+    if (files) {
+        n_files = g_list_model_get_n_items(files);
+        
+        // Process each selected file
+        for (guint i = 0; i < n_files; i++) {
+            GFile *file = G_FILE(g_list_model_get_item(files, i));
+            char *filepath = g_file_get_path(file);
+            
+            // Check if file is a valid image format
+            const char *valid_extensions[] = {".jpg", ".jpeg", ".png", ".gif", 
+                                             ".JPG", ".JPEG", ".PNG", ".GIF", NULL};
+            gboolean valid = FALSE;
+            
+            for (int j = 0; valid_extensions[j] != NULL; j++) {
+                if (g_str_has_suffix(filepath, valid_extensions[j])) {
+                    valid = TRUE;
+                    break;
+                }
+            }
+            
+            if (valid) {
+                // Add image to list
+                add_image_to_list(app_data, filepath);
+                g_print("Loaded image: %s\n", filepath);
+                valid_count++;
+            } else {
+                g_printerr("Skipped non-image file: %s\n", filepath);
+                invalid_count++;
+            }
+            
+            g_free(filepath);
+            g_object_unref(file);
+        }
+        
+        // Show summary message if there were any issues
+        if (invalid_count > 0) {
+            char message[256];
+            g_snprintf(message, sizeof(message), 
+                      "Loaded %d image(s) successfully.\n%d file(s) were skipped (not valid image formats).",
+                      valid_count, invalid_count);
+            show_message_dialog(GTK_WINDOW(app_data->window), "Load Summary", message);
+        } else if (valid_count > 1) {
+            char message[128];
+            g_snprintf(message, sizeof(message), 
+                      "Successfully loaded %d images!", valid_count);
+            show_message_dialog(GTK_WINDOW(app_data->window), "Success", message);
+        }
+        
+        g_object_unref(files);
+    } else if (error) {
+        if (error->code != G_IO_ERROR_CANCELLED) {
+            g_printerr("Error opening files: %s\n", error->message);
         }
         g_error_free(error);
     }
