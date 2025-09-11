@@ -178,15 +178,6 @@ TCP guarantees order & integrity; no per-chunk ACK necessary.
 * **Undefined references to SSL/uuid**: Install `libssl-dev` and `uuid-dev` and ensure `-lssl -lcrypto -luuid` in the Makefile.
 * **GTK errors**: `pkg-config --modversion gtk4` must return a valid version.
 
-## Roadmap
-
-* [ ] Server-side TLS for `"https"` end-to-end
-* [ ] Keep-alive single connection for multiple images
-* [ ] Final ACK after `IMAGE_COMPLETE`
-* [ ] Image preview thumbnails
-* [ ] Drag & drop
-* [ ] Result viewer (server-processed outputs)
-
 ## License
 
 Developed for the Systems Operations course. All rights reserved.

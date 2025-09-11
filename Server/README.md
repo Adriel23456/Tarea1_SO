@@ -159,12 +159,8 @@ typedef struct {
 
 ## Roadmap
 
-* [ ] Server-side TLS (OpenSSL) to support `"https"` from the client
-* [ ] Multi-client concurrency (thread-per-connection or event loop)
-* [ ] Queue by size (smallest-first) for processing stage
 * [ ] Daemonization (SysVinit or systemd unit) with `start|stop|status|restart`
 * [ ] Processing modules: histogram equalization & color classification
-* [ ] Final ACK after `IMAGE_COMPLETE`
 
 ## License
 

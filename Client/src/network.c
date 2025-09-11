@@ -306,7 +306,15 @@ static int send_one_image(const char* filepath,
         return -1;
     }
 
-    // (Opcional) Podríamos esperar un ACK final del server; por ahora lo dejamos fire-and-forget.
+    // Esperar ACK final del servidor
+    {
+        MessageHeader ackhdr;
+        if (recv_header(&ns, &ackhdr) != 0 || ackhdr.type != MSG_ACK) {
+            if (cb) cb("Missing/invalid final ACK from server", 1.0);
+            close_stream(&ns);
+            return -1;
+        }
+    }
     close_stream(&ns);
     if (cb) {
         char msg[256];

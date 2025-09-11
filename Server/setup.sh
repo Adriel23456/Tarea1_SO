@@ -8,13 +8,13 @@ if [ -f /etc/os-release ]; then . /etc/os-release; fi
 case "$ID" in
     ubuntu|debian)
         sudo apt update
-        sudo apt install -y build-essential uuid-dev
+        sudo apt install -y build-essential uuid-dev libssl-dev
         ;;
     fedora)
-        sudo dnf install -y gcc libuuid-devel
+        sudo dnf install -y gcc libuuid-devel openssl-devel
         ;;
     arch)
-        sudo pacman -Syu --noconfirm base-devel util-linux-libs
+        sudo pacman -Syu --noconfirm base-devel util-linux-libs openssl
         ;;
     *)
         echo "Install manually: gcc, libuuid-dev"

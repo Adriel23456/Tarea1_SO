@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -O2 -g
-LIBS = -luuid
+LIBS = -luuid -lssl -lcrypto -lpthread
 
 SRCDIR = src
 SOURCES = $(SRCDIR)/main.c
