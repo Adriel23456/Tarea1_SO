@@ -60,10 +60,8 @@ Special thanks to:
                       COPYRIGHT
 ================================================================
 
-© 2024 - Systems Operations Course Project
-All Rights Reserved
+© 2025 - Systems Operations Course Project
 
 This software is provided for educational purposes only.
-Redistribution without permission is prohibited.
 
 ================================================================

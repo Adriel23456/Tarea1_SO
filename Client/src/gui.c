@@ -152,9 +152,13 @@ void create_main_window(AppData *app_data) {
         "list row:selected { "
         "  background-color: #3498db; "
         "} "
+        "list row:selected { "
+        "  background-color: #3498db; "
+        "} "
         "list row:selected label { "
-        "  color: #ffffff; "
-        "} ";
+        "  color: #ff0000; "
+        "} "
+        ;
     
     gtk_css_provider_load_from_string(css_provider, css);
     gtk_style_context_add_provider_for_display(
