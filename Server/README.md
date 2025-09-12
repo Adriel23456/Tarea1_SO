@@ -185,6 +185,25 @@ ls -lh /opt/ImageServer/assets/colors/blue
 ls -lh /opt/ImageServer/assets/histogram
 ```
 
+To eliminate the content of this files we have:
+
+```bash
+sudo systemctl stop ImageService
+
+sudo find /opt/ImageServer/assets/colors/red \
+           /opt/ImageServer/assets/colors/green \
+           /opt/ImageServer/assets/colors/blue \
+           /opt/ImageServer/assets/histogram \
+     -mindepth 1 -exec rm -rf {} +
+
+sudo find /opt/ImageServer/assets/colors/red \
+          /opt/ImageServer/assets/colors/green \
+          /opt/ImageServer/assets/colors/blue \
+          /opt/ImageServer/assets/histogram -mindepth 1 | wc -l
+
+sudo systemctl start ImageService
+```
+
 Open an output file (GUI environment):
 
 ```bash
