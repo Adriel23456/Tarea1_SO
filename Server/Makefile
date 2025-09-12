@@ -12,6 +12,7 @@ SOURCES = $(SRCDIR)/main.c \
           $(SRCDIR)/logging.c \
           $(SRCDIR)/connection.c \
           $(SRCDIR)/utils.c \
+		  $(SRCDIR)/daemon.c \
           $(SRCDIR)/image_processing.c \
           $(SRCDIR)/gif_processing.c \
           $(SRCDIR)/server.c \

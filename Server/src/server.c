@@ -204,12 +204,23 @@ void* handle_client(void* arg) {
     return NULL;
 }
 
+volatile sig_atomic_t g_terminate = 0;
+volatile sig_atomic_t g_reload = 0;
+static int g_listen_fd = -1;
+
+void server_request_shutdown(void) {
+    g_terminate = 1;
+    if (g_listen_fd >= 0) {
+        shutdown(g_listen_fd, SHUT_RDWR);
+        // no cerramos aquí; lo cerramos al salir del bucle principal
+    }
+}
+
 int start_server(void) {
     // Initialize TLS if enabled
     if (g_cfg.tls_enabled) {
         if (tls_init_ctx(g_cfg.tls_dir) != 0) {
-            log_line("TLS enabled in config, but initialization failed. "
-                    "Check certificate and key in %s", g_cfg.tls_dir);
+            log_line("TLS enabled in config, but initialization failed. Check certificate and key in %s", g_cfg.tls_dir);
             return -1;
         }
         log_line("TLS enabled (listening TLS) on port %d", g_cfg.port);
@@ -219,14 +230,15 @@ int start_server(void) {
 
     // Create listening socket
     int srv = socket(AF_INET, SOCK_STREAM, 0);
-    if (srv < 0) { 
-        perror("socket"); 
-        return -1; 
+    if (srv < 0) {
+        perror("socket");
+        return -1;
     }
+    g_listen_fd = srv;
 
     // Enable address reuse
     int opt = 1;
-    setsockopt(srv, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    (void)setsockopt(srv, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
     // Bind to port
     struct sockaddr_in addr;
@@ -238,27 +250,33 @@ int start_server(void) {
     if (bind(srv, (struct sockaddr*)&addr, sizeof(addr)) != 0) {
         perror("bind");
         close(srv);
+        g_listen_fd = -1;
         return -1;
     }
-    
+
     // Start listening
     if (listen(srv, BACKLOG) != 0) {
         perror("listen");
         close(srv);
+        g_listen_fd = -1;
         return -1;
     }
-    
+
     log_line("Listening with image processing enabled...");
 
     // Accept loop - one thread per connection
     for (;;) {
+        if (g_terminate) break;
+
         struct sockaddr_in cli;
         socklen_t clilen = sizeof(cli);
         int fd = accept(srv, (struct sockaddr*)&cli, &clilen);
-        
-        if (fd < 0) { 
-            perror("accept"); 
-            continue; 
+
+        if (fd < 0) {
+            if (g_terminate) break;       // estamos cerrando
+            if (errno == EINTR) continue; // señal interrumpió accept
+            perror("accept");
+            continue;
         }
 
         // Log client connection
@@ -266,17 +284,23 @@ int start_server(void) {
         inet_ntop(AF_INET, &cli.sin_addr, cip, sizeof(cip));
         log_line("Accepted connection from %s:%d", cip, ntohs(cli.sin_port));
 
-        // Create connection structure
-        Conn* c = (Conn*)calloc(1, sizeof(Conn));
-        if (!c) { 
-            close(fd); 
-            continue; 
+        // Observa si hubo petición de recarga (SIGHUP)
+        if (g_reload) {
+            g_reload = 0;
+            log_line("Reload flag observed (SIGHUP)");
+            // Aquí podrías reabrir config/log si quisieras una recarga en caliente.
         }
-        
+
+        // Crear estructura de conexión
+        Conn* c = (Conn*)calloc(1, sizeof(Conn));
+        if (!c) {
+            close(fd);
+            continue;
+        }
         c->fd = fd;
         c->ssl = NULL;
 
-        // Setup TLS if enabled
+        // Configurar TLS si está habilitado
         if (g_cfg.tls_enabled) {
             SSL* ssl = SSL_new(get_ssl_ctx());
             if (!ssl) {
@@ -284,9 +308,9 @@ int start_server(void) {
                 free(c);
                 continue;
             }
-            
+
             SSL_set_fd(ssl, fd);
-            
+
             if (SSL_accept(ssl) != 1) {
                 log_line("TLS handshake failed");
                 SSL_free(ssl);
@@ -294,25 +318,24 @@ int start_server(void) {
                 free(c);
                 continue;
             }
-            
+
             c->ssl = ssl;
         }
 
-        // Create thread to handle client
+        // Lanzar hilo para atender al cliente
         pthread_t th;
         int rc = pthread_create(&th, NULL, handle_client, c);
-        
         if (rc != 0) {
             log_line("pthread_create failed");
             conn_close(c);
             free(c);
             continue;
         }
-        
         pthread_detach(th);
     }
 
-    // Cleanup (unreachable in normal operation)
     close(srv);
+    g_listen_fd = -1;
+    log_line("Server stop: listen socket closed");
     return 0;
 }
