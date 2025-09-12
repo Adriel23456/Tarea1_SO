@@ -1,7 +1,7 @@
 {
   "server": {
     "port": 1717,
-    "tls_enabled": 0,
+    "tls_enabled": 1,
     "tls_dir": "assets/tls"
   },
   "paths": {

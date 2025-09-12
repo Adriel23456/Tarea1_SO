@@ -2,7 +2,7 @@
   "server": {
     "host": "localhost",
     "port": 1717,
-    "protocol": "http"
+    "protocol": "https"
   },
   "client": {
     "chunk_size": 65536,

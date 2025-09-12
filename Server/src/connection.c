@@ -64,17 +64,23 @@ int cs_send_all(Conn* c, const void* buf, size_t len) {
 int cs_recv_all(Conn* c, void* buf, size_t len) {
     unsigned char* p = (unsigned char*)buf;
     size_t r = 0;
-    
+
     while (r < len) {
-        ssize_t n = c->ssl 
+        ssize_t n = c->ssl
             ? SSL_read(c->ssl, p + r, (int)(len - r))
             : recv(c->fd, p + r, len - r, 0);
-            
-        if (n <= 0) return -1;
+
+        if (n == 0) {
+            // Cierre ordenado del peer (EOF)
+            return -2; // NUEVO: señalamos EOF de forma diferenciada
+        }
+        if (n < 0) {
+            return -1; // error real de lectura
+        }
         r += (size_t)n;
     }
-    
-    return 0;
+
+    return 0; // éxito
 }
 
 int send_header(Conn* c, uint8_t type, uint32_t payload_len, const char* image_id) {
@@ -95,12 +101,15 @@ int send_header(Conn* c, uint8_t type, uint32_t payload_len, const char* image_i
 }
 
 int recv_header(Conn* c, MessageHeader* out) {
-    if (cs_recv_all(c, out, sizeof(*out)) != 0) 
-        return -1;
-        
+    int rc = cs_recv_all(c, out, sizeof(*out));
+    if (rc != 0) {
+        // rc == -2 (EOF) o rc == -1 (error)
+        return rc;
+    }
+
     out->length = from_be32_s(out->length);
     out->image_id[36] = '\0';
-    
+
     return 0;
 }
 

@@ -42,8 +42,12 @@ void* handle_client(void* arg) {
     while (!done) {
         MessageHeader h;
 
-        if (recv_header(c, &h) != 0) {
-            log_line("Connection dropped while waiting header");
+        int hr = recv_header(c, &h);
+        if (hr == -2) { // EOF del cliente
+            log_line("Client closed connection (EOF)");
+            break;
+        } else if (hr != 0) {
+            log_line("Connection error while waiting for header");
             break;
         }
 
@@ -65,8 +69,9 @@ void* handle_client(void* arg) {
             }
 
             ImageInfo info;
-            if (cs_recv_all(c, &info, sizeof(info)) != 0) {
-                log_line("Failed to read IMAGE_INFO payload");
+            int irc = cs_recv_all(c, &info, sizeof(info));
+            if (irc != 0) {
+                log_line("Failed to read IMAGE_INFO payload (rc=%d)", irc);
                 break;
             }
 
@@ -101,9 +106,10 @@ void* handle_client(void* arg) {
             unsigned char* tmp = (unsigned char*)malloc(to_read);
             if (!tmp) { log_line("OOM on chunk tmp"); break; }
 
-            if (cs_recv_all(c, tmp, to_read) != 0) {
+            int crc = cs_recv_all(c, tmp, to_read);
+            if (crc != 0) {
                 free(tmp);
-                log_line("Failed to read chunk body");
+                log_line("Failed to read chunk body (rc=%d)", crc);
                 break;
             }
 
@@ -124,15 +130,17 @@ void* handle_client(void* arg) {
         } else if (h.type == MSG_IMAGE_COMPLETE) {
             char fmt[32] = {0};
             if (h.length > 0 && h.length < sizeof(fmt)) {
-                if (cs_recv_all(c, fmt, h.length) != 0) {
-                    log_line("Failed read COMPLETE fmt");
+                int crc = cs_recv_all(c, fmt, h.length);
+                if (crc != 0) {
+                    log_line("Failed read COMPLETE fmt (rc=%d)", crc);
                     break;
                 }
                 fmt[sizeof(fmt)-1] = '\0';
             } else if (h.length > 0) {
                 char* tmp = (char*)malloc(h.length);
                 if (!tmp) break;
-                if (cs_recv_all(c, tmp, h.length) != 0) { free(tmp); break; }
+                int crc = cs_recv_all(c, tmp, h.length);
+                if (crc != 0) { free(tmp); break; }
                 free(tmp);
             }
 
@@ -184,11 +192,15 @@ void* handle_client(void* arg) {
             total_size = 0;
             processing_type = 0;
 
+            // Modo "una imagen por conexión": cerrar limpio tras COMPLETE
+            done = 1;
+
         } else {
             if (h.length > 0) {
                 char* tmp = (char*)malloc(h.length);
                 if (!tmp) break;
-                if (cs_recv_all(c, tmp, h.length) != 0) { free(tmp); break; }
+                int crc = cs_recv_all(c, tmp, h.length);
+                if (crc != 0) { free(tmp); break; }
                 free(tmp);
             }
             log_line("Unknown msg type %u, ignored", (unsigned)h.type);
@@ -278,6 +290,11 @@ int start_server(void) {
             perror("accept");
             continue;
         }
+
+        // Opcional: timeouts de I/O para evitar bloqueos eternos
+        struct timeval tv = { .tv_sec = 15, .tv_usec = 0 };
+        setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+        setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 
         // Log client connection
         char cip[64];

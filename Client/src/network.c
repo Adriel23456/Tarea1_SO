@@ -222,7 +222,7 @@ static int send_one_image(const char* filepath,
         return -1;
     }
 
-    // 2) Exchange simple para validar vida del server: HELLO -> IMAGE_ID_RESPONSE
+    // 2) HELLO -> IMAGE_ID_RESPONSE
     if (send_message(&ns, MSG_HELLO, NULL, NULL, 0) != 0) {
         if (cb) cb("Failed to send HELLO", 0.0);
         close_stream(&ns);
@@ -254,13 +254,20 @@ static int send_one_image(const char* filepath,
     int chunk = cfg->chunk_size > 0 ? cfg->chunk_size : DEFAULT_CHUNK_SIZE;
     uint32_t total_chunks = (uint32_t)((total_size_l + chunk - 1) / chunk);
 
+    // Sanitizar proc_type (1..3); si llega fuera de rango, usar PROC_BOTH
+    if (proc_type != PROC_HISTOGRAM &&
+        proc_type != PROC_COLOR_CLASSIFICATION &&
+        proc_type != PROC_BOTH) {
+        proc_type = PROC_BOTH;
+    }
+
     ImageInfo info;
     memset(&info, 0, sizeof(info));
     const char* base = base_from_path(filepath);
     strncpy(info.filename, base, sizeof(info.filename)-1);
     info.total_size   = to_be32((uint32_t)total_size_l);
     info.total_chunks = to_be32(total_chunks);
-    info.processing_type = (ProcessingType)info.processing_type;
+    info.processing_type = (uint8_t)proc_type;
     strncpy(info.format, ext_from_filename(filepath), sizeof(info.format)-1);
 
     if (send_message(&ns, MSG_IMAGE_INFO, image_id, &info, sizeof(info)) != 0) {

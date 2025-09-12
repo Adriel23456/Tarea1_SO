@@ -1,96 +1,243 @@
 == Image Server Log ==
 
-
-[2025-09-11 17:47:22] Accepted connection from 127.0.0.1:39170
-[2025-09-11 17:47:22] HELLO -> new image id = 0c6562e6-d2fe-4a72-8004-c0737df30903
-[2025-09-11 17:47:22] IMAGE_INFO: id=0c6562e6-d2fe-4a72-8004-c0737df30903 file=Azul.png size=136733 bytes chunks=3 proc=3 fmt=png
-[2025-09-11 17:47:22] IMAGE_COMPLETE: id=0c6562e6-d2fe-4a72-8004-c0737df30903 file=Azul.png fmt=png chunks=3 remaining=0
-[2025-09-11 17:47:22] Scheduler: enqueued id=0c6562e6-d2fe-4a72-8004-c0737df30903 size=136733 file=Azul.png fmt=png
-[2025-09-11 17:47:22] Scheduler: processing id=0c6562e6-d2fe-4a72-8004-c0737df30903 size=136733 file=Azul.png fmt=png
-[2025-09-11 17:47:22] Connection dropped while waiting header
-[2025-09-11 17:47:22] Connection closed
-[2025-09-11 17:47:22] Accepted connection from 127.0.0.1:39176
-[2025-09-11 17:47:22] HELLO -> new image id = 38cd9afe-9b08-46aa-bd2a-7348cf56dbfc
-[2025-09-11 17:47:22] IMAGE_INFO: id=38cd9afe-9b08-46aa-bd2a-7348cf56dbfc file=cine.gif size=645901 bytes chunks=10 proc=3 fmt=gif
-[2025-09-11 17:47:22] Processing (memory) 0c6562e6-d2fe-4a72-8004-c0737df30903: 612x344, 3 ch, type=3 (static)
-[2025-09-11 17:47:22] Color classification (memory): saved to assets/colors/blue/0c6562e6-d2fe-4a72-8004-c0737df30903_Azul.png (dominant: blue)
-[2025-09-11 17:47:22] IMAGE_COMPLETE: id=38cd9afe-9b08-46aa-bd2a-7348cf56dbfc file=cine.gif fmt=gif chunks=10 remaining=0
-[2025-09-11 17:47:22] Scheduler: enqueued id=38cd9afe-9b08-46aa-bd2a-7348cf56dbfc size=645901 file=cine.gif fmt=gif
-[2025-09-11 17:47:22] Connection dropped while waiting header
-[2025-09-11 17:47:22] Connection closed
-[2025-09-11 17:47:22] Accepted connection from 127.0.0.1:39180
-[2025-09-11 17:47:22] HELLO -> new image id = de583910-b318-4df1-8cd6-7a05d4a4277b
-[2025-09-11 17:47:22] Histogram equalization (memory): saved to assets/histogram/0c6562e6-d2fe-4a72-8004-c0737df30903_Azul.png
-[2025-09-11 17:47:22] Scheduler: done id=0c6562e6-d2fe-4a72-8004-c0737df30903
-[2025-09-11 17:47:22] Scheduler: processing id=38cd9afe-9b08-46aa-bd2a-7348cf56dbfc size=645901 file=cine.gif fmt=gif
-[2025-09-11 17:47:22] IMAGE_INFO: id=de583910-b318-4df1-8cd6-7a05d4a4277b file=Ejemplo.png size=39084 bytes chunks=1 proc=3 fmt=png
-[2025-09-11 17:47:22] IMAGE_COMPLETE: id=de583910-b318-4df1-8cd6-7a05d4a4277b file=Ejemplo.png fmt=png chunks=1 remaining=0
-[2025-09-11 17:47:22] Scheduler: enqueued id=de583910-b318-4df1-8cd6-7a05d4a4277b size=39084 file=Ejemplo.png fmt=png
-[2025-09-11 17:47:22] Connection dropped while waiting header
-[2025-09-11 17:47:22] Connection closed
-[2025-09-11 17:47:22] Accepted connection from 127.0.0.1:39182
-[2025-09-11 17:47:22] HELLO -> new image id = 462ad6ab-6f4e-4514-afd7-d11a9e2753c2
-[2025-09-11 17:47:22] IMAGE_INFO: id=462ad6ab-6f4e-4514-afd7-d11a9e2753c2 file=Histograma.png size=71952 bytes chunks=2 proc=3 fmt=png
-[2025-09-11 17:47:22] IMAGE_COMPLETE: id=462ad6ab-6f4e-4514-afd7-d11a9e2753c2 file=Histograma.png fmt=png chunks=2 remaining=0
-[2025-09-11 17:47:22] Scheduler: enqueued id=462ad6ab-6f4e-4514-afd7-d11a9e2753c2 size=71952 file=Histograma.png fmt=png
-[2025-09-11 17:47:22] Connection dropped while waiting header
-[2025-09-11 17:47:22] Connection closed
-[2025-09-11 17:47:22] Accepted connection from 127.0.0.1:39186
-[2025-09-11 17:47:22] HELLO -> new image id = 7a154e59-2345-4778-977a-52fd633ee1c8
-[2025-09-11 17:47:22] IMAGE_INFO: id=7a154e59-2345-4778-977a-52fd633ee1c8 file=Rojo.png size=80364 bytes chunks=2 proc=3 fmt=png
-[2025-09-11 17:47:22] IMAGE_COMPLETE: id=7a154e59-2345-4778-977a-52fd633ee1c8 file=Rojo.png fmt=png chunks=2 remaining=0
-[2025-09-11 17:47:22] Scheduler: enqueued id=7a154e59-2345-4778-977a-52fd633ee1c8 size=80364 file=Rojo.png fmt=png
-[2025-09-11 17:47:22] Connection dropped while waiting header
-[2025-09-11 17:47:22] Connection closed
-[2025-09-11 17:47:22] Accepted connection from 127.0.0.1:39196
-[2025-09-11 17:47:22] HELLO -> new image id = f0b23438-9c55-4605-a9d1-8a6446a76428
-[2025-09-11 17:47:22] IMAGE_INFO: id=f0b23438-9c55-4605-a9d1-8a6446a76428 file=rojo-elmo.gif size=631341 bytes chunks=10 proc=3 fmt=gif
-[2025-09-11 17:47:23] IMAGE_COMPLETE: id=f0b23438-9c55-4605-a9d1-8a6446a76428 file=rojo-elmo.gif fmt=gif chunks=10 remaining=0
-[2025-09-11 17:47:23] Scheduler: enqueued id=f0b23438-9c55-4605-a9d1-8a6446a76428 size=631341 file=rojo-elmo.gif fmt=gif
-[2025-09-11 17:47:23] Connection dropped while waiting header
-[2025-09-11 17:47:23] Connection closed
-[2025-09-11 17:47:23] Accepted connection from 127.0.0.1:39212
-[2025-09-11 17:47:23] HELLO -> new image id = e936271a-aa5f-4d7b-acf2-b09a5389c082
-[2025-09-11 17:47:23] IMAGE_INFO: id=e936271a-aa5f-4d7b-acf2-b09a5389c082 file=Verde.png size=829101 bytes chunks=13 proc=3 fmt=png
-[2025-09-11 17:47:23] Color classification GIF (memory): saved to assets/colors/green/38cd9afe-9b08-46aa-bd2a-7348cf56dbfc_cine.gif (dominant green)
-[2025-09-11 17:47:23] IMAGE_COMPLETE: id=e936271a-aa5f-4d7b-acf2-b09a5389c082 file=Verde.png fmt=png chunks=13 remaining=0
-[2025-09-11 17:47:23] Scheduler: enqueued id=e936271a-aa5f-4d7b-acf2-b09a5389c082 size=829101 file=Verde.png fmt=png
-[2025-09-11 17:47:23] Connection dropped while waiting header
-[2025-09-11 17:47:23] Connection closed
-[2025-09-11 17:47:23] Accepted connection from 127.0.0.1:39214
-[2025-09-11 17:47:23] HELLO -> new image id = d0255305-d2b8-411a-93ea-08270d58c361
-[2025-09-11 17:47:23] IMAGE_INFO: id=d0255305-d2b8-411a-93ea-08270d58c361 file=verde-elmo.gif size=585446 bytes chunks=9 proc=3 fmt=gif
-[2025-09-11 17:47:23] IMAGE_COMPLETE: id=d0255305-d2b8-411a-93ea-08270d58c361 file=verde-elmo.gif fmt=gif chunks=9 remaining=0
-[2025-09-11 17:47:23] Scheduler: enqueued id=d0255305-d2b8-411a-93ea-08270d58c361 size=585446 file=verde-elmo.gif fmt=gif
-[2025-09-11 17:47:23] Connection dropped while waiting header
-[2025-09-11 17:47:23] Connection closed
-[2025-09-11 17:47:23] Histogram equalization GIF (memory): saved to assets/histogram/38cd9afe-9b08-46aa-bd2a-7348cf56dbfc_cine.gif
-[2025-09-11 17:47:23] Scheduler: done id=38cd9afe-9b08-46aa-bd2a-7348cf56dbfc
-[2025-09-11 17:47:23] Scheduler: processing id=de583910-b318-4df1-8cd6-7a05d4a4277b size=39084 file=Ejemplo.png fmt=png
-[2025-09-11 17:47:23] Processing (memory) de583910-b318-4df1-8cd6-7a05d4a4277b: 242x295, 4 ch, type=3 (static)
-[2025-09-11 17:47:23] Color classification (memory): saved to assets/colors/red/de583910-b318-4df1-8cd6-7a05d4a4277b_Ejemplo.png (dominant: red)
-[2025-09-11 17:47:23] Histogram equalization (memory): saved to assets/histogram/de583910-b318-4df1-8cd6-7a05d4a4277b_Ejemplo.png
-[2025-09-11 17:47:23] Scheduler: done id=de583910-b318-4df1-8cd6-7a05d4a4277b
-[2025-09-11 17:47:23] Scheduler: processing id=462ad6ab-6f4e-4514-afd7-d11a9e2753c2 size=71952 file=Histograma.png fmt=png
-[2025-09-11 17:47:23] Processing (memory) 462ad6ab-6f4e-4514-afd7-d11a9e2753c2: 695x702, 4 ch, type=3 (static)
-[2025-09-11 17:47:23] Color classification (memory): saved to assets/colors/red/462ad6ab-6f4e-4514-afd7-d11a9e2753c2_Histograma.png (dominant: red)
-[2025-09-11 17:47:23] Histogram equalization (memory): saved to assets/histogram/462ad6ab-6f4e-4514-afd7-d11a9e2753c2_Histograma.png
-[2025-09-11 17:47:23] Scheduler: done id=462ad6ab-6f4e-4514-afd7-d11a9e2753c2
-[2025-09-11 17:47:23] Scheduler: processing id=7a154e59-2345-4778-977a-52fd633ee1c8 size=80364 file=Rojo.png fmt=png
-[2025-09-11 17:47:23] Processing (memory) 7a154e59-2345-4778-977a-52fd633ee1c8: 612x306, 3 ch, type=3 (static)
-[2025-09-11 17:47:23] Color classification (memory): saved to assets/colors/red/7a154e59-2345-4778-977a-52fd633ee1c8_Rojo.png (dominant: red)
-[2025-09-11 17:47:23] Histogram equalization (memory): saved to assets/histogram/7a154e59-2345-4778-977a-52fd633ee1c8_Rojo.png
-[2025-09-11 17:47:23] Scheduler: done id=7a154e59-2345-4778-977a-52fd633ee1c8
-[2025-09-11 17:47:23] Scheduler: processing id=d0255305-d2b8-411a-93ea-08270d58c361 size=585446 file=verde-elmo.gif fmt=gif
-[2025-09-11 17:47:23] Color classification GIF (memory): saved to assets/colors/green/d0255305-d2b8-411a-93ea-08270d58c361_verde-elmo.gif (dominant green)
-[2025-09-11 17:47:23] Histogram equalization GIF (memory): saved to assets/histogram/d0255305-d2b8-411a-93ea-08270d58c361_verde-elmo.gif
-[2025-09-11 17:47:23] Scheduler: done id=d0255305-d2b8-411a-93ea-08270d58c361
-[2025-09-11 17:47:23] Scheduler: processing id=f0b23438-9c55-4605-a9d1-8a6446a76428 size=631341 file=rojo-elmo.gif fmt=gif
-[2025-09-11 17:47:24] Color classification GIF (memory): saved to assets/colors/red/f0b23438-9c55-4605-a9d1-8a6446a76428_rojo-elmo.gif (dominant red)
-[2025-09-11 17:47:24] Histogram equalization GIF (memory): saved to assets/histogram/f0b23438-9c55-4605-a9d1-8a6446a76428_rojo-elmo.gif
-[2025-09-11 17:47:24] Scheduler: done id=f0b23438-9c55-4605-a9d1-8a6446a76428
-[2025-09-11 17:47:24] Scheduler: processing id=e936271a-aa5f-4d7b-acf2-b09a5389c082 size=829101 file=Verde.png fmt=png
-[2025-09-11 17:47:24] Processing (memory) e936271a-aa5f-4d7b-acf2-b09a5389c082: 740x740, 3 ch, type=3 (static)
-[2025-09-11 17:47:24] Color classification (memory): saved to assets/colors/green/e936271a-aa5f-4d7b-acf2-b09a5389c082_Verde.png (dominant: green)
-[2025-09-11 17:47:24] Histogram equalization (memory): saved to assets/histogram/e936271a-aa5f-4d7b-acf2-b09a5389c082_Verde.png
-[2025-09-11 17:47:24] Scheduler: done id=e936271a-aa5f-4d7b-acf2-b09a5389c082
+[2025-09-12 02:07:32] Scheduler: worker thread started
+[2025-09-12 02:07:32] Server starting (plain TCP) on port 1717
+[2025-09-12 02:07:32] Listening with image processing enabled...
+[2025-09-12 02:07:36] Accepted connection from 127.0.0.1:54932
+[2025-09-12 02:07:36] HELLO -> new image id = 5edf6820-e6d0-4c51-ac38-4a7a974100a0
+[2025-09-12 02:07:36] IMAGE_INFO: id=5edf6820-e6d0-4c51-ac38-4a7a974100a0 file=Azul.png size=136733 bytes chunks=3 proc=0 fmt=png
+[2025-09-12 02:07:36] IMAGE_COMPLETE: id=5edf6820-e6d0-4c51-ac38-4a7a974100a0 file=Azul.png fmt=png chunks=3 remaining=0
+[2025-09-12 02:07:36] Connection closed
+[2025-09-12 02:07:36] Accepted connection from 127.0.0.1:54936
+[2025-09-12 02:07:36] HELLO -> new image id = 4cdca3ce-904f-4566-bfe7-2a90d56289ee
+[2025-09-12 02:07:36] IMAGE_INFO: id=4cdca3ce-904f-4566-bfe7-2a90d56289ee file=cine.gif size=645901 bytes chunks=10 proc=0 fmt=gif
+[2025-09-12 02:07:36] IMAGE_COMPLETE: id=4cdca3ce-904f-4566-bfe7-2a90d56289ee file=cine.gif fmt=gif chunks=10 remaining=0
+[2025-09-12 02:07:36] Connection closed
+[2025-09-12 02:07:36] Accepted connection from 127.0.0.1:54946
+[2025-09-12 02:07:36] HELLO -> new image id = 2fff0b72-0c9d-486d-a711-bfdd6001ebd9
+[2025-09-12 02:07:36] IMAGE_INFO: id=2fff0b72-0c9d-486d-a711-bfdd6001ebd9 file=Ejemplo.png size=39084 bytes chunks=1 proc=0 fmt=png
+[2025-09-12 02:07:36] IMAGE_COMPLETE: id=2fff0b72-0c9d-486d-a711-bfdd6001ebd9 file=Ejemplo.png fmt=png chunks=1 remaining=0
+[2025-09-12 02:07:36] Connection closed
+[2025-09-12 02:07:36] Accepted connection from 127.0.0.1:54954
+[2025-09-12 02:07:36] HELLO -> new image id = ea24b4ef-ad06-4d5f-8683-525ed6229d6b
+[2025-09-12 02:07:36] IMAGE_INFO: id=ea24b4ef-ad06-4d5f-8683-525ed6229d6b file=Histograma.png size=71952 bytes chunks=2 proc=0 fmt=png
+[2025-09-12 02:07:36] IMAGE_COMPLETE: id=ea24b4ef-ad06-4d5f-8683-525ed6229d6b file=Histograma.png fmt=png chunks=2 remaining=0
+[2025-09-12 02:07:36] Connection closed
+[2025-09-12 02:07:36] Accepted connection from 127.0.0.1:54966
+[2025-09-12 02:07:36] HELLO -> new image id = e704a50d-b00b-4e00-a32e-b3566eeb2ead
+[2025-09-12 02:07:36] IMAGE_INFO: id=e704a50d-b00b-4e00-a32e-b3566eeb2ead file=Rojo.png size=80364 bytes chunks=2 proc=0 fmt=png
+[2025-09-12 02:07:36] IMAGE_COMPLETE: id=e704a50d-b00b-4e00-a32e-b3566eeb2ead file=Rojo.png fmt=png chunks=2 remaining=0
+[2025-09-12 02:07:36] Connection closed
+[2025-09-12 02:07:36] Accepted connection from 127.0.0.1:54980
+[2025-09-12 02:07:36] HELLO -> new image id = e8d8ed82-789e-4851-8720-1f1d32286d64
+[2025-09-12 02:07:36] IMAGE_INFO: id=e8d8ed82-789e-4851-8720-1f1d32286d64 file=rojo-elmo.gif size=631341 bytes chunks=10 proc=0 fmt=gif
+[2025-09-12 02:07:36] IMAGE_COMPLETE: id=e8d8ed82-789e-4851-8720-1f1d32286d64 file=rojo-elmo.gif fmt=gif chunks=10 remaining=0
+[2025-09-12 02:07:36] Connection closed
+[2025-09-12 02:07:36] Accepted connection from 127.0.0.1:54996
+[2025-09-12 02:07:36] HELLO -> new image id = 8ca945e4-74a2-4807-8c86-f51e4a2c7d4c
+[2025-09-12 02:07:36] IMAGE_INFO: id=8ca945e4-74a2-4807-8c86-f51e4a2c7d4c file=Verde.png size=829101 bytes chunks=13 proc=0 fmt=png
+[2025-09-12 02:07:36] IMAGE_COMPLETE: id=8ca945e4-74a2-4807-8c86-f51e4a2c7d4c file=Verde.png fmt=png chunks=13 remaining=0
+[2025-09-12 02:07:36] Connection closed
+[2025-09-12 02:07:36] Accepted connection from 127.0.0.1:55008
+[2025-09-12 02:07:36] HELLO -> new image id = 6d7d8a9f-e7cc-410a-9f8b-673f576c240a
+[2025-09-12 02:07:36] IMAGE_INFO: id=6d7d8a9f-e7cc-410a-9f8b-673f576c240a file=verde-elmo.gif size=585446 bytes chunks=9 proc=0 fmt=gif
+[2025-09-12 02:07:36] IMAGE_COMPLETE: id=6d7d8a9f-e7cc-410a-9f8b-673f576c240a file=verde-elmo.gif fmt=gif chunks=9 remaining=0
+[2025-09-12 02:07:36] Connection closed
+[2025-09-12 02:15:02] Server stop: listen socket closed
+[2025-09-12 02:15:02] Scheduler: worker thread stopped
+[2025-09-12 02:15:03] Scheduler: worker thread started
+[2025-09-12 02:15:03] Server starting (plain TCP) on port 1717
+[2025-09-12 02:15:03] Listening with image processing enabled...
+[2025-09-12 02:15:19] Accepted connection from 127.0.0.1:52160
+[2025-09-12 02:15:19] HELLO -> new image id = ad843722-5ef8-4342-926a-b7f10f5cf2fe
+[2025-09-12 02:15:19] IMAGE_INFO: id=ad843722-5ef8-4342-926a-b7f10f5cf2fe file=Azul.png size=136733 bytes chunks=3 proc=3 fmt=png
+[2025-09-12 02:15:19] IMAGE_COMPLETE: id=ad843722-5ef8-4342-926a-b7f10f5cf2fe file=Azul.png fmt=png chunks=3 remaining=0
+[2025-09-12 02:15:19] Scheduler: enqueued id=ad843722-5ef8-4342-926a-b7f10f5cf2fe size=136733 file=Azul.png fmt=png
+[2025-09-12 02:15:19] Scheduler: processing id=ad843722-5ef8-4342-926a-b7f10f5cf2fe size=136733 file=Azul.png fmt=png
+[2025-09-12 02:15:19] Connection closed
+[2025-09-12 02:15:19] Accepted connection from 127.0.0.1:52166
+[2025-09-12 02:15:19] HELLO -> new image id = f088d283-4685-4ec8-936a-05bd64c0005a
+[2025-09-12 02:15:19] IMAGE_INFO: id=f088d283-4685-4ec8-936a-05bd64c0005a file=cine.gif size=645901 bytes chunks=10 proc=3 fmt=gif
+[2025-09-12 02:15:19] Processing (memory) ad843722-5ef8-4342-926a-b7f10f5cf2fe: 612x344, 3 ch, type=3 (static)
+[2025-09-12 02:15:19] Color classification (memory): saved to assets/colors/blue/ad843722-5ef8-4342-926a-b7f10f5cf2fe_Azul.png (dominant: blue)
+[2025-09-12 02:15:19] IMAGE_COMPLETE: id=f088d283-4685-4ec8-936a-05bd64c0005a file=cine.gif fmt=gif chunks=10 remaining=0
+[2025-09-12 02:15:19] Scheduler: enqueued id=f088d283-4685-4ec8-936a-05bd64c0005a size=645901 file=cine.gif fmt=gif
+[2025-09-12 02:15:19] Connection closed
+[2025-09-12 02:15:19] Accepted connection from 127.0.0.1:52182
+[2025-09-12 02:15:19] HELLO -> new image id = 1f16e489-aa9f-40f7-8347-4e8cbb07e46d
+[2025-09-12 02:15:19] IMAGE_INFO: id=1f16e489-aa9f-40f7-8347-4e8cbb07e46d file=Ejemplo.png size=39084 bytes chunks=1 proc=3 fmt=png
+[2025-09-12 02:15:19] Histogram equalization (memory): saved to assets/histogram/ad843722-5ef8-4342-926a-b7f10f5cf2fe_Azul.png
+[2025-09-12 02:15:19] Scheduler: done id=ad843722-5ef8-4342-926a-b7f10f5cf2fe
+[2025-09-12 02:15:19] Scheduler: processing id=f088d283-4685-4ec8-936a-05bd64c0005a size=645901 file=cine.gif fmt=gif
+[2025-09-12 02:15:19] IMAGE_COMPLETE: id=1f16e489-aa9f-40f7-8347-4e8cbb07e46d file=Ejemplo.png fmt=png chunks=1 remaining=0
+[2025-09-12 02:15:19] Scheduler: enqueued id=1f16e489-aa9f-40f7-8347-4e8cbb07e46d size=39084 file=Ejemplo.png fmt=png
+[2025-09-12 02:15:19] Connection closed
+[2025-09-12 02:15:19] Accepted connection from 127.0.0.1:52194
+[2025-09-12 02:15:19] HELLO -> new image id = fd74aa7f-2bd6-4897-980f-63cb63ddf78b
+[2025-09-12 02:15:19] IMAGE_INFO: id=fd74aa7f-2bd6-4897-980f-63cb63ddf78b file=Histograma.png size=71952 bytes chunks=2 proc=3 fmt=png
+[2025-09-12 02:15:19] IMAGE_COMPLETE: id=fd74aa7f-2bd6-4897-980f-63cb63ddf78b file=Histograma.png fmt=png chunks=2 remaining=0
+[2025-09-12 02:15:19] Scheduler: enqueued id=fd74aa7f-2bd6-4897-980f-63cb63ddf78b size=71952 file=Histograma.png fmt=png
+[2025-09-12 02:15:19] Connection closed
+[2025-09-12 02:15:19] Accepted connection from 127.0.0.1:52200
+[2025-09-12 02:15:19] HELLO -> new image id = 63a53dfc-ce0c-439c-9ce4-6c0a812e4c0a
+[2025-09-12 02:15:19] IMAGE_INFO: id=63a53dfc-ce0c-439c-9ce4-6c0a812e4c0a file=Rojo.png size=80364 bytes chunks=2 proc=3 fmt=png
+[2025-09-12 02:15:19] IMAGE_COMPLETE: id=63a53dfc-ce0c-439c-9ce4-6c0a812e4c0a file=Rojo.png fmt=png chunks=2 remaining=0
+[2025-09-12 02:15:19] Scheduler: enqueued id=63a53dfc-ce0c-439c-9ce4-6c0a812e4c0a size=80364 file=Rojo.png fmt=png
+[2025-09-12 02:15:19] Connection closed
+[2025-09-12 02:15:19] Accepted connection from 127.0.0.1:52204
+[2025-09-12 02:15:19] HELLO -> new image id = 1db6ae7f-54cd-46b3-bbd5-8c2342c30cda
+[2025-09-12 02:15:19] IMAGE_INFO: id=1db6ae7f-54cd-46b3-bbd5-8c2342c30cda file=rojo-elmo.gif size=631341 bytes chunks=10 proc=3 fmt=gif
+[2025-09-12 02:15:19] IMAGE_COMPLETE: id=1db6ae7f-54cd-46b3-bbd5-8c2342c30cda file=rojo-elmo.gif fmt=gif chunks=10 remaining=0
+[2025-09-12 02:15:19] Scheduler: enqueued id=1db6ae7f-54cd-46b3-bbd5-8c2342c30cda size=631341 file=rojo-elmo.gif fmt=gif
+[2025-09-12 02:15:19] Connection closed
+[2025-09-12 02:15:19] Accepted connection from 127.0.0.1:52216
+[2025-09-12 02:15:19] HELLO -> new image id = 1b011fd8-a062-4c7f-b385-a43d37f64618
+[2025-09-12 02:15:19] IMAGE_INFO: id=1b011fd8-a062-4c7f-b385-a43d37f64618 file=Verde.png size=829101 bytes chunks=13 proc=3 fmt=png
+[2025-09-12 02:15:19] Color classification GIF (memory): saved to assets/colors/green/f088d283-4685-4ec8-936a-05bd64c0005a_cine.gif (dominant green)
+[2025-09-12 02:15:19] IMAGE_COMPLETE: id=1b011fd8-a062-4c7f-b385-a43d37f64618 file=Verde.png fmt=png chunks=13 remaining=0
+[2025-09-12 02:15:19] Scheduler: enqueued id=1b011fd8-a062-4c7f-b385-a43d37f64618 size=829101 file=Verde.png fmt=png
+[2025-09-12 02:15:19] Connection closed
+[2025-09-12 02:15:19] Accepted connection from 127.0.0.1:52218
+[2025-09-12 02:15:19] HELLO -> new image id = 3085f9fa-70e7-4bb7-8c55-fade60679d90
+[2025-09-12 02:15:19] IMAGE_INFO: id=3085f9fa-70e7-4bb7-8c55-fade60679d90 file=verde-elmo.gif size=585446 bytes chunks=9 proc=3 fmt=gif
+[2025-09-12 02:15:19] IMAGE_COMPLETE: id=3085f9fa-70e7-4bb7-8c55-fade60679d90 file=verde-elmo.gif fmt=gif chunks=9 remaining=0
+[2025-09-12 02:15:19] Scheduler: enqueued id=3085f9fa-70e7-4bb7-8c55-fade60679d90 size=585446 file=verde-elmo.gif fmt=gif
+[2025-09-12 02:15:19] Connection closed
+[2025-09-12 02:15:20] Histogram equalization GIF (memory): saved to assets/histogram/f088d283-4685-4ec8-936a-05bd64c0005a_cine.gif
+[2025-09-12 02:15:20] Scheduler: done id=f088d283-4685-4ec8-936a-05bd64c0005a
+[2025-09-12 02:15:20] Scheduler: processing id=1f16e489-aa9f-40f7-8347-4e8cbb07e46d size=39084 file=Ejemplo.png fmt=png
+[2025-09-12 02:15:20] Processing (memory) 1f16e489-aa9f-40f7-8347-4e8cbb07e46d: 242x295, 4 ch, type=3 (static)
+[2025-09-12 02:15:20] Color classification (memory): saved to assets/colors/red/1f16e489-aa9f-40f7-8347-4e8cbb07e46d_Ejemplo.png (dominant: red)
+[2025-09-12 02:15:20] Histogram equalization (memory): saved to assets/histogram/1f16e489-aa9f-40f7-8347-4e8cbb07e46d_Ejemplo.png
+[2025-09-12 02:15:20] Scheduler: done id=1f16e489-aa9f-40f7-8347-4e8cbb07e46d
+[2025-09-12 02:15:20] Scheduler: processing id=fd74aa7f-2bd6-4897-980f-63cb63ddf78b size=71952 file=Histograma.png fmt=png
+[2025-09-12 02:15:20] Processing (memory) fd74aa7f-2bd6-4897-980f-63cb63ddf78b: 695x702, 4 ch, type=3 (static)
+[2025-09-12 02:15:20] Color classification (memory): saved to assets/colors/red/fd74aa7f-2bd6-4897-980f-63cb63ddf78b_Histograma.png (dominant: red)
+[2025-09-12 02:15:20] Histogram equalization (memory): saved to assets/histogram/fd74aa7f-2bd6-4897-980f-63cb63ddf78b_Histograma.png
+[2025-09-12 02:15:20] Scheduler: done id=fd74aa7f-2bd6-4897-980f-63cb63ddf78b
+[2025-09-12 02:15:20] Scheduler: processing id=63a53dfc-ce0c-439c-9ce4-6c0a812e4c0a size=80364 file=Rojo.png fmt=png
+[2025-09-12 02:15:20] Processing (memory) 63a53dfc-ce0c-439c-9ce4-6c0a812e4c0a: 612x306, 3 ch, type=3 (static)
+[2025-09-12 02:15:20] Color classification (memory): saved to assets/colors/red/63a53dfc-ce0c-439c-9ce4-6c0a812e4c0a_Rojo.png (dominant: red)
+[2025-09-12 02:15:20] Histogram equalization (memory): saved to assets/histogram/63a53dfc-ce0c-439c-9ce4-6c0a812e4c0a_Rojo.png
+[2025-09-12 02:15:20] Scheduler: done id=63a53dfc-ce0c-439c-9ce4-6c0a812e4c0a
+[2025-09-12 02:15:20] Scheduler: processing id=3085f9fa-70e7-4bb7-8c55-fade60679d90 size=585446 file=verde-elmo.gif fmt=gif
+[2025-09-12 02:15:20] Color classification GIF (memory): saved to assets/colors/green/3085f9fa-70e7-4bb7-8c55-fade60679d90_verde-elmo.gif (dominant green)
+[2025-09-12 02:15:20] Histogram equalization GIF (memory): saved to assets/histogram/3085f9fa-70e7-4bb7-8c55-fade60679d90_verde-elmo.gif
+[2025-09-12 02:15:20] Scheduler: done id=3085f9fa-70e7-4bb7-8c55-fade60679d90
+[2025-09-12 02:15:20] Scheduler: processing id=1db6ae7f-54cd-46b3-bbd5-8c2342c30cda size=631341 file=rojo-elmo.gif fmt=gif
+[2025-09-12 02:15:20] Color classification GIF (memory): saved to assets/colors/red/1db6ae7f-54cd-46b3-bbd5-8c2342c30cda_rojo-elmo.gif (dominant red)
+[2025-09-12 02:15:20] Histogram equalization GIF (memory): saved to assets/histogram/1db6ae7f-54cd-46b3-bbd5-8c2342c30cda_rojo-elmo.gif
+[2025-09-12 02:15:20] Scheduler: done id=1db6ae7f-54cd-46b3-bbd5-8c2342c30cda
+[2025-09-12 02:15:20] Scheduler: processing id=1b011fd8-a062-4c7f-b385-a43d37f64618 size=829101 file=Verde.png fmt=png
+[2025-09-12 02:15:20] Processing (memory) 1b011fd8-a062-4c7f-b385-a43d37f64618: 740x740, 3 ch, type=3 (static)
+[2025-09-12 02:15:21] Color classification (memory): saved to assets/colors/green/1b011fd8-a062-4c7f-b385-a43d37f64618_Verde.png (dominant: green)
+[2025-09-12 02:15:21] Histogram equalization (memory): saved to assets/histogram/1b011fd8-a062-4c7f-b385-a43d37f64618_Verde.png
+[2025-09-12 02:15:21] Scheduler: done id=1b011fd8-a062-4c7f-b385-a43d37f64618
+[2025-09-12 02:15:45] Server stop: listen socket closed
+[2025-09-12 02:15:45] Scheduler: worker thread stopped
+[2025-09-12 02:15:53] Scheduler: worker thread started
+[2025-09-12 02:15:53] TLS enabled (listening TLS) on port 1717
+[2025-09-12 02:15:53] Listening with image processing enabled...
+[2025-09-12 02:15:57] Accepted connection from 127.0.0.1:35518
+[2025-09-12 02:15:57] TLS handshake failed
+[2025-09-12 02:15:57] Accepted connection from 127.0.0.1:35530
+[2025-09-12 02:15:57] TLS handshake failed
+[2025-09-12 02:15:57] Accepted connection from 127.0.0.1:35534
+[2025-09-12 02:15:57] TLS handshake failed
+[2025-09-12 02:15:57] Accepted connection from 127.0.0.1:35536
+[2025-09-12 02:15:57] TLS handshake failed
+[2025-09-12 02:15:57] Accepted connection from 127.0.0.1:35548
+[2025-09-12 02:15:57] TLS handshake failed
+[2025-09-12 02:15:57] Accepted connection from 127.0.0.1:35556
+[2025-09-12 02:15:57] TLS handshake failed
+[2025-09-12 02:15:57] Accepted connection from 127.0.0.1:35558
+[2025-09-12 02:15:57] TLS handshake failed
+[2025-09-12 02:15:57] Accepted connection from 127.0.0.1:35570
+[2025-09-12 02:15:57] TLS handshake failed
+[2025-09-12 02:16:24] Accepted connection from 127.0.0.1:33058
+[2025-09-12 02:16:24] HELLO -> new image id = 0cb78924-e8f9-4286-80e6-2b6a59af41dd
+[2025-09-12 02:16:24] IMAGE_INFO: id=0cb78924-e8f9-4286-80e6-2b6a59af41dd file=Azul.png size=136733 bytes chunks=3 proc=3 fmt=png
+[2025-09-12 02:16:24] IMAGE_COMPLETE: id=0cb78924-e8f9-4286-80e6-2b6a59af41dd file=Azul.png fmt=png chunks=3 remaining=0
+[2025-09-12 02:16:24] Scheduler: enqueued id=0cb78924-e8f9-4286-80e6-2b6a59af41dd size=136733 file=Azul.png fmt=png
+[2025-09-12 02:16:24] Scheduler: processing id=0cb78924-e8f9-4286-80e6-2b6a59af41dd size=136733 file=Azul.png fmt=png
+[2025-09-12 02:16:24] Connection closed
+[2025-09-12 02:16:24] Accepted connection from 127.0.0.1:33066
+[2025-09-12 02:16:24] HELLO -> new image id = 1ad01c5a-f880-4614-874c-fe8f93ef5743
+[2025-09-12 02:16:24] Processing (memory) 0cb78924-e8f9-4286-80e6-2b6a59af41dd: 612x344, 3 ch, type=3 (static)
+[2025-09-12 02:16:24] Color classification (memory): saved to assets/colors/blue/0cb78924-e8f9-4286-80e6-2b6a59af41dd_Azul.png (dominant: blue)
+[2025-09-12 02:16:24] IMAGE_INFO: id=1ad01c5a-f880-4614-874c-fe8f93ef5743 file=cine.gif size=645901 bytes chunks=10 proc=3 fmt=gif
+[2025-09-12 02:16:24] Histogram equalization (memory): saved to assets/histogram/0cb78924-e8f9-4286-80e6-2b6a59af41dd_Azul.png
+[2025-09-12 02:16:24] Scheduler: done id=0cb78924-e8f9-4286-80e6-2b6a59af41dd
+[2025-09-12 02:16:24] IMAGE_COMPLETE: id=1ad01c5a-f880-4614-874c-fe8f93ef5743 file=cine.gif fmt=gif chunks=10 remaining=0
+[2025-09-12 02:16:24] Scheduler: enqueued id=1ad01c5a-f880-4614-874c-fe8f93ef5743 size=645901 file=cine.gif fmt=gif
+[2025-09-12 02:16:24] Scheduler: processing id=1ad01c5a-f880-4614-874c-fe8f93ef5743 size=645901 file=cine.gif fmt=gif
+[2025-09-12 02:16:24] Connection closed
+[2025-09-12 02:16:24] Accepted connection from 127.0.0.1:33082
+[2025-09-12 02:16:24] HELLO -> new image id = 1a898e82-2d33-4ba8-840a-5c4140e737ec
+[2025-09-12 02:16:24] IMAGE_INFO: id=1a898e82-2d33-4ba8-840a-5c4140e737ec file=Ejemplo.png size=39084 bytes chunks=1 proc=3 fmt=png
+[2025-09-12 02:16:25] IMAGE_COMPLETE: id=1a898e82-2d33-4ba8-840a-5c4140e737ec file=Ejemplo.png fmt=png chunks=1 remaining=0
+[2025-09-12 02:16:25] Scheduler: enqueued id=1a898e82-2d33-4ba8-840a-5c4140e737ec size=39084 file=Ejemplo.png fmt=png
+[2025-09-12 02:16:25] Connection closed
+[2025-09-12 02:16:25] Accepted connection from 127.0.0.1:33098
+[2025-09-12 02:16:25] HELLO -> new image id = c5d08f94-5f1e-4702-a0b1-4201ee49864b
+[2025-09-12 02:16:25] IMAGE_INFO: id=c5d08f94-5f1e-4702-a0b1-4201ee49864b file=Histograma.png size=71952 bytes chunks=2 proc=3 fmt=png
+[2025-09-12 02:16:25] IMAGE_COMPLETE: id=c5d08f94-5f1e-4702-a0b1-4201ee49864b file=Histograma.png fmt=png chunks=2 remaining=0
+[2025-09-12 02:16:25] Scheduler: enqueued id=c5d08f94-5f1e-4702-a0b1-4201ee49864b size=71952 file=Histograma.png fmt=png
+[2025-09-12 02:16:25] Connection closed
+[2025-09-12 02:16:25] Accepted connection from 127.0.0.1:33114
+[2025-09-12 02:16:25] HELLO -> new image id = 16f24eec-5fcb-4133-9c3d-888e569e8685
+[2025-09-12 02:16:25] Color classification GIF (memory): saved to assets/colors/green/1ad01c5a-f880-4614-874c-fe8f93ef5743_cine.gif (dominant green)
+[2025-09-12 02:16:25] IMAGE_INFO: id=16f24eec-5fcb-4133-9c3d-888e569e8685 file=Rojo.png size=80364 bytes chunks=2 proc=3 fmt=png
+[2025-09-12 02:16:25] IMAGE_COMPLETE: id=16f24eec-5fcb-4133-9c3d-888e569e8685 file=Rojo.png fmt=png chunks=2 remaining=0
+[2025-09-12 02:16:25] Scheduler: enqueued id=16f24eec-5fcb-4133-9c3d-888e569e8685 size=80364 file=Rojo.png fmt=png
+[2025-09-12 02:16:25] Connection closed
+[2025-09-12 02:16:25] Accepted connection from 127.0.0.1:33126
+[2025-09-12 02:16:25] HELLO -> new image id = a810854f-70ff-40e0-9a19-ab0d6a981e8c
+[2025-09-12 02:16:25] IMAGE_INFO: id=a810854f-70ff-40e0-9a19-ab0d6a981e8c file=rojo-elmo.gif size=631341 bytes chunks=10 proc=3 fmt=gif
+[2025-09-12 02:16:25] IMAGE_COMPLETE: id=a810854f-70ff-40e0-9a19-ab0d6a981e8c file=rojo-elmo.gif fmt=gif chunks=10 remaining=0
+[2025-09-12 02:16:25] Scheduler: enqueued id=a810854f-70ff-40e0-9a19-ab0d6a981e8c size=631341 file=rojo-elmo.gif fmt=gif
+[2025-09-12 02:16:25] Connection closed
+[2025-09-12 02:16:25] Accepted connection from 127.0.0.1:33130
+[2025-09-12 02:16:25] HELLO -> new image id = bb73ee01-b67b-4cb4-b0e5-34913d081edc
+[2025-09-12 02:16:25] IMAGE_INFO: id=bb73ee01-b67b-4cb4-b0e5-34913d081edc file=Verde.png size=829101 bytes chunks=13 proc=3 fmt=png
+[2025-09-12 02:16:25] IMAGE_COMPLETE: id=bb73ee01-b67b-4cb4-b0e5-34913d081edc file=Verde.png fmt=png chunks=13 remaining=0
+[2025-09-12 02:16:25] Scheduler: enqueued id=bb73ee01-b67b-4cb4-b0e5-34913d081edc size=829101 file=Verde.png fmt=png
+[2025-09-12 02:16:25] Connection closed
+[2025-09-12 02:16:25] Accepted connection from 127.0.0.1:33146
+[2025-09-12 02:16:25] HELLO -> new image id = d424aa9a-757b-4034-b3c1-7fc3f74cc7d5
+[2025-09-12 02:16:25] IMAGE_INFO: id=d424aa9a-757b-4034-b3c1-7fc3f74cc7d5 file=verde-elmo.gif size=585446 bytes chunks=9 proc=3 fmt=gif
+[2025-09-12 02:16:25] IMAGE_COMPLETE: id=d424aa9a-757b-4034-b3c1-7fc3f74cc7d5 file=verde-elmo.gif fmt=gif chunks=9 remaining=0
+[2025-09-12 02:16:25] Scheduler: enqueued id=d424aa9a-757b-4034-b3c1-7fc3f74cc7d5 size=585446 file=verde-elmo.gif fmt=gif
+[2025-09-12 02:16:25] Connection closed
+[2025-09-12 02:16:25] Histogram equalization GIF (memory): saved to assets/histogram/1ad01c5a-f880-4614-874c-fe8f93ef5743_cine.gif
+[2025-09-12 02:16:25] Scheduler: done id=1ad01c5a-f880-4614-874c-fe8f93ef5743
+[2025-09-12 02:16:25] Scheduler: processing id=1a898e82-2d33-4ba8-840a-5c4140e737ec size=39084 file=Ejemplo.png fmt=png
+[2025-09-12 02:16:25] Processing (memory) 1a898e82-2d33-4ba8-840a-5c4140e737ec: 242x295, 4 ch, type=3 (static)
+[2025-09-12 02:16:25] Color classification (memory): saved to assets/colors/red/1a898e82-2d33-4ba8-840a-5c4140e737ec_Ejemplo.png (dominant: red)
+[2025-09-12 02:16:25] Histogram equalization (memory): saved to assets/histogram/1a898e82-2d33-4ba8-840a-5c4140e737ec_Ejemplo.png
+[2025-09-12 02:16:25] Scheduler: done id=1a898e82-2d33-4ba8-840a-5c4140e737ec
+[2025-09-12 02:16:25] Scheduler: processing id=c5d08f94-5f1e-4702-a0b1-4201ee49864b size=71952 file=Histograma.png fmt=png
+[2025-09-12 02:16:25] Processing (memory) c5d08f94-5f1e-4702-a0b1-4201ee49864b: 695x702, 4 ch, type=3 (static)
+[2025-09-12 02:16:25] Color classification (memory): saved to assets/colors/red/c5d08f94-5f1e-4702-a0b1-4201ee49864b_Histograma.png (dominant: red)
+[2025-09-12 02:16:25] Histogram equalization (memory): saved to assets/histogram/c5d08f94-5f1e-4702-a0b1-4201ee49864b_Histograma.png
+[2025-09-12 02:16:25] Scheduler: done id=c5d08f94-5f1e-4702-a0b1-4201ee49864b
+[2025-09-12 02:16:25] Scheduler: processing id=16f24eec-5fcb-4133-9c3d-888e569e8685 size=80364 file=Rojo.png fmt=png
+[2025-09-12 02:16:25] Processing (memory) 16f24eec-5fcb-4133-9c3d-888e569e8685: 612x306, 3 ch, type=3 (static)
+[2025-09-12 02:16:25] Color classification (memory): saved to assets/colors/red/16f24eec-5fcb-4133-9c3d-888e569e8685_Rojo.png (dominant: red)
+[2025-09-12 02:16:25] Histogram equalization (memory): saved to assets/histogram/16f24eec-5fcb-4133-9c3d-888e569e8685_Rojo.png
+[2025-09-12 02:16:25] Scheduler: done id=16f24eec-5fcb-4133-9c3d-888e569e8685
+[2025-09-12 02:16:25] Scheduler: processing id=d424aa9a-757b-4034-b3c1-7fc3f74cc7d5 size=585446 file=verde-elmo.gif fmt=gif
+[2025-09-12 02:16:25] Color classification GIF (memory): saved to assets/colors/green/d424aa9a-757b-4034-b3c1-7fc3f74cc7d5_verde-elmo.gif (dominant green)
+[2025-09-12 02:16:26] Histogram equalization GIF (memory): saved to assets/histogram/d424aa9a-757b-4034-b3c1-7fc3f74cc7d5_verde-elmo.gif
+[2025-09-12 02:16:26] Scheduler: done id=d424aa9a-757b-4034-b3c1-7fc3f74cc7d5
+[2025-09-12 02:16:26] Scheduler: processing id=a810854f-70ff-40e0-9a19-ab0d6a981e8c size=631341 file=rojo-elmo.gif fmt=gif
+[2025-09-12 02:16:26] Color classification GIF (memory): saved to assets/colors/red/a810854f-70ff-40e0-9a19-ab0d6a981e8c_rojo-elmo.gif (dominant red)
+[2025-09-12 02:16:26] Histogram equalization GIF (memory): saved to assets/histogram/a810854f-70ff-40e0-9a19-ab0d6a981e8c_rojo-elmo.gif
+[2025-09-12 02:16:26] Scheduler: done id=a810854f-70ff-40e0-9a19-ab0d6a981e8c
+[2025-09-12 02:16:26] Scheduler: processing id=bb73ee01-b67b-4cb4-b0e5-34913d081edc size=829101 file=Verde.png fmt=png
+[2025-09-12 02:16:26] Processing (memory) bb73ee01-b67b-4cb4-b0e5-34913d081edc: 740x740, 3 ch, type=3 (static)
+[2025-09-12 02:16:26] Color classification (memory): saved to assets/colors/green/bb73ee01-b67b-4cb4-b0e5-34913d081edc_Verde.png (dominant: green)
+[2025-09-12 02:16:26] Histogram equalization (memory): saved to assets/histogram/bb73ee01-b67b-4cb4-b0e5-34913d081edc_Verde.png
+[2025-09-12 02:16:26] Scheduler: done id=bb73ee01-b67b-4cb4-b0e5-34913d081edc
+[2025-09-12 02:17:00] Server stop: listen socket closed
+[2025-09-12 02:17:00] Scheduler: worker thread stopped
