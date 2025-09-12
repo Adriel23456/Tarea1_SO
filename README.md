@@ -1,93 +1,158 @@
-# Tarea1_SO
+# Tarea1\_SO
 
-Objetivo principal:
-- Implementar un servicio(Daemon) secundario en alguna plataforma de Linux con el fin de brindar un servicio al usuario.
+## Objetivo principal
 
-Sinopsis:
-- La ejecucion de aplicaciones o procesos en segundo plano provee algunas ventajas en el uso de las mismas, por ejemplo, se puede utilizar como un WebServer. En este proyecto se desarrollara un Daemon Linux utilizando SysVinit o Systemd. El Daemon implementara la funcionalidad de un servidor web cuya funcion principal sera el procesamiento de imagenes. Se debera considerar lo siguiente:
-- El servidor/cliente sera desarrollaro en el lenguaje de programacion C.
-- Se utilizaran conceptos relacionados con procesos e hilos (socket, bind, listen).
-- Para el intercambio de informacion entre los clientes y el servidor se utilizara el protocolo HTTP o TCP.
+Implementar un servicio (*daemon*) en una plataforma Linux que brinde un servicio al usuario.
 
-Desarrollo:
-1-Servidor:
-    - Modulo que realiza todo el procesamiento de los archivos.
-    - Debera ser capaz de aceptar los archivos (imagenes de cualquier tamaño y formato jpg, jpeg, png y gif), considera obtener los valores matematicos PUROS de las imagenes y aplicar cualquier operacion a esos valores y luego recontruir el archivo, que se procesaran de acuerdo con el tamaño de los mismos, es decir, se procesara primero los archivos mas pequeños primeros (debe existir un hilo escuchando).
-    - El servidor tendra dos funciones principales:
-        - La primera es poder tomar una imagen y aplicarle un histograma de ecualizacion, el cual consiste en mejorar el contraste de los colores de una imagen. La imagen se guardara en una ruta predeterminada que se define en el archivo de configuracion.
-        - La segunda funcion es clasificar imagenes de acuerdo con el color predominante en la misma, es decir, habra tres directorios con los nombres de 'verdes', 'rojas', 'azules, en los cuales se almacenaran las imagenes con mayor cantidad de color, segun corresponda.
-    - El puerto que utilizara el servidor por defecto es 1717, sin embargo, este puede cambiar especificandolo en el archivo de configuracion. Cada vez que inicie el servidor actualizara dicho valor.
-    - Existira un archivo de configuracion que estara en el directorio: '/etc/server/config.conf'. Tambien se debera crear un archivo de registro (log), donde se almacene la actividad del servidor, o sea, que guarde peticiones de los clientes a tal archivo, estado de la ejecucion y hora de la misma.
-    - El servidor debe iniciar cuando arranca el sistema (asegurandose de incorporar todas las dependencias de red) y la implementacion del mismo quedara a diseño de los creadores, puede utilizar SYsVinit o Systemd service, se debe justificar la eleccion.
-    - El nombre del servidor sera: ImageServer y debera implementar las funciones de start, stop, status y restart. Las cuales consisten en iniciar, parar, reiniciar (debe cargar los datos de configuracion) y ver el estado del servidor en cualquier momento desde la consola.
-    - Se debe asegurar que el Servidor trabaje como se espera, con comprobacion usando el comando 'top' o 'ps' de que de verdad es un daemon.
-    - El servidor debe ejecutarse en diferente maquina que el cliente, y por ende, el cliente se ejecutara en una maquina virtual o un contenedor.
-=========================================
-(Ejemplo de archivo de configuracion)
+## Sinopsis
+
+La ejecución de aplicaciones o procesos en segundo plano ofrece ventajas prácticas (p. ej., un **servidor web** o de procesamiento). En este proyecto se desarrollará un *daemon* en Linux utilizando **SysVinit** o **systemd**. El daemon expondrá la funcionalidad de un **servidor de procesamiento de imágenes**. Se deberá considerar:
+
+* El **servidor/cliente** será desarrollado en **C**.
+* Se utilizarán conceptos de **procesos** e **hilos** (socket, bind, listen).
+* Para el intercambio de información entre clientes y servidor se utilizará **HTTP** o **TCP**.
+
+---
+
+## Desarrollo
+
+### 1. Servidor
+
+* Módulo que realiza **todo el procesamiento de archivos**.
+* Debe **aceptar imágenes** de cualquier tamaño en formatos **jpg, jpeg, png y gif**; obtener los valores numéricos puros de la imagen, **aplicar operaciones** y **reconstruir** el archivo. El procesamiento será **prioritario por tamaño** (primero los archivos más pequeños). Debe existir **un hilo en escucha** permanente.
+* Funciones principales:
+
+  1. **Ecualización de histograma**: mejora el contraste de la imagen. La salida se guarda en una ruta predefinida en el archivo de configuración.
+  2. **Clasificación por color predominante**: tres directorios *verdes*, *rojas* y *azules* almacenarán las imágenes según su color dominante.
+* **Puerto por defecto**: `1717` (configurable en el archivo de configuración; el servidor debe leerlo en cada inicio).
+* **Archivo de configuración**: residirá en el directorio indicado (ej.: `/etc/server/config.conf`). Debe existir además un **archivo de registro (log)** con las peticiones, estado de ejecución y marcas de tiempo.
+* **Inicio al arrancar el sistema** (incorporando dependencias de red). La implementación puede ser con **SysVinit** o **systemd** (se debe **justificar la elección**).
+* **Nombre del servicio**: `ImageServer`. Debe implementar `start`, `stop`, `status` y `restart` (iniciar, detener, **reiniciar recargando configuración** y ver el estado).
+* **Verificación de daemon**: comprobar con `top` o `ps` que el proceso corre en segundo plano.
+* **Despliegue**: el servidor debe ejecutarse en una máquina diferente al cliente (el cliente puede correr en una VM o contenedor).
+
+#### Ejemplo de archivo de configuración
+
+```text
 Puerto:1719
 DirColores:/jason/carpeta1/carpeta2
 DirHisto:/jason/dir1/dir2
 DirLog:/carpeta1
-=========================================
+```
 
-=========================================
-(Ejemplo de ejecuciones del servidor)
-------------------------------------
-#service ImageService stop
-Stopping ImageService... done
+#### Ejemplo de ejecuciones del servidor
 
-#/etc/init.d/ImageServer stop
-Stopping ImageService... done
+```bash
+# SysV / service
+service ImageService stop
+service ImageService restart
+service ImageService start
+service ImageService status
 
-#systemctl stop ImageService
-------------------------------------
-#service ImageService restart
-Restarting ImageService... done
+# Script SysV directo
+/etc/init.d/ImageServer stop
+/etc/init.d/ImageServer restart
+/etc/init.d/ImageServer start
+/etc/init.d/ImageServer status
 
-#/etc/init.d/ImageServer restart
-Restarting ImageService... done
+# systemd
+sudo systemctl stop ImageService
+sudo systemctl restart ImageService
+sudo systemctl start ImageService
+sudo systemctl status ImageService
+```
 
-#systemctl restart ImageService
-------------------------------------
-#service ImageService start
-Starting ImageService... done
+---
 
-#/etc/init.d/ImageServer start
-Starting ImageService... done
+### 2. Cliente
 
-#systemctl start ImageService
-------------------------------------
-#service ImageService status
-daemon: ImageService is running (pid 17039)
+* Aplicación simple: permite al usuario **elegir la imagen** a analizar y **enviarla al servidor** para su procesamiento.
+* Envía imágenes **secuencialmente** hasta que el usuario escriba `Exit`. No se requiere interfaz gráfica; sí **configuración básica** (IP, puerto y parámetros relevantes).
 
-#/etc/init.d/ImageServer status
-daemon: ImageService is running (pid 17039)
+---
 
-#systemctl status ImageService
-------------------------------------
-=========================================
-2-Cliente:
-    - Es una aplicacion simple, donde la principal idea es un mecanismo para que el usuario elija la imagen que desea analizar y con ello enviarla al servidor para que proceda con el filtrado de la misma.
-    - El cliente enviara imagenes de manera secuencial hasta que el usuario escriba 'Exit'. No se requiere una interfaz grafica, pero se debe considerar la configuracion basica como ip y puerto y otros parametros.
-3-Indicaciones generales:
-    - Todo se realizara en el lenguaje de programacion de C y se puede utilizar cualquier biblioteca de la misma.
-    - Se debe implementar en linux
-    - El cliente debe ser ejecutado en una maquina virtual (PERO si se ejecuta el servidor en una maquina virtual en la nube, entonces, el cliente simplemente se ejecuta localmente)
-    - Sobre la ecualizacion del histograma, este toma en cuenta el histograma de los colores, para posteriormente calcular la frecuencia y con ello hacer la transformacion de cada pixel. Para el mapeo del nuevo pixel se puede utilizar el siguiente mapeo:
-    Nuevo_pixel = FrecuenciaAcumulada(pixel) * 255 / (ancho*alto)
+### 3. Indicaciones generales
 
+* Todo se implementará en **C**, pudiendo usar **bibliotecas** del lenguaje/entorno.
+* Se implementará en **Linux**.
+* El **cliente** debe ejecutarse en una **máquina virtual** (o local si el servidor corre en una VM en la nube).
+* Sobre la **ecualización de histograma**: se toma el histograma de los canales de color, se calcula la **frecuencia acumulada** y se transforma cada píxel. Mapeo sugerido:
 
-Plan de desarrollo:
-1- Montar la aplicacion grafica del cliente la cual nos permita preparar un set de MULTIPLES imagenes listas.
-2- Hacer que nuestra aplicacion de cliente extraiga las propiedades binarias de nuestras imagenes y que las tenga listas en memoria para mandar hacer el servidor.
-3- Hacer un cliente/servidor y un protocolo que nos permita mandar UNA imagen a la vez, mandandolo por trozos de su parte binaria.
-4- Tener la parte del servidor la cual simplemente va a estar siempre listo para recibir las imagenes y asegurarse que sea capaz de recibir una imagen a la vez secuencialmente. SIEMPRE ESCUCHANDO.
-5- Montarle al servidor la capacidad para aplicarle a las imagenes sus dos funciones, histograma y clasificar
-6- Montarle al servidor la funcionalidad de que sea un servicio de tipo daemon en Linux y sus funciones extras
-7- Hacer el testing con todo 'local' pero asegurandose que todo movimiento de informacion SIEMPRE sea por 'https:1717' y que el servidor si sea un daemon
-8- Montar el servidor en una maquina virtual
-9- Modificar la configuracion del programa de cliente para que mande las imagenes por la red a la maquina virtual en la nube
+```text
+Nuevo_pixel = FrecuenciaAcumulada(pixel) * 255 / (ancho * alto)
+```
 
-*Al mismo tiempo:*
-1- Investigar y justificar las decisiones sobre librerias y sobre como implementar un daemon en Linux
-2- Preparacion general de la documentacion y de las preguntas que vamos a estar realizando
+---
+
+## Gestión del servicio
+
+### Comandos principales (systemd)
+
+```bash
+sudo systemctl stop ImageService
+sudo systemctl restart ImageService
+sudo systemctl start ImageService
+sudo systemctl status ImageService
+```
+
+### Verificación del proceso (daemon)
+
+```bash
+# Ver PIDs y comando
+pidof image-server
+ps aux | grep image-server
+ps -p "$(pidof image-server)" -o pid,ppid,cmd
+
+# Monitoreo en tiempo real
+top -p "$(pidof image-server)"
+```
+
+---
+
+## Exploración de directorios y logs
+
+### Contenido de carpetas de clasificación e histogramas
+
+```bash
+ls -lh /ruta/a/colors/rojas
+ls -lh /ruta/a/colors/verdes
+ls -lh /ruta/a/colors/azules
+ls -lh /ruta/a/histogramas
+```
+
+### Abrir un archivo directamente (entorno gráfico)
+
+```bash
+# Abre el primer archivo listado en 'rojas' con el visor por defecto
+xdg-open "/ruta/a/colors/rojas/$(ls -1 /ruta/a/colors/rojas | head -n1)" 2>/dev/null || true
+
+# O abrir un archivo específico
+xdg-open "/ruta/a/colors/rojas/NOMBRE_ARCHIVO"
+```
+
+### Ver el archivo de log del servidor
+
+```bash
+tail -f /ruta/a/log.txt
+```
+
+> Ajusta las rutas anteriores a las definidas en tu archivo de configuración.
+
+---
+
+## Plan de desarrollo
+
+1. **Cliente (UI/CLI):** preparar un set de múltiples imágenes.
+2. **Cliente (memoria):** extraer los **datos binarios** de cada imagen y mantenerlos listos en memoria.
+3. **Protocolo cliente/servidor:** enviar **una imagen a la vez**, por **trozos** (chunks).
+4. **Servidor (escucha):** aceptar conexiones y **recibir secuencialmente**; siempre **en escucha**.
+5. **Servidor (procesamiento):** implementar **histograma** y **clasificación por color**.
+6. **Servicio en Linux:** desplegar como **daemon** con funciones `start/stop/status/restart`.
+7. **Pruebas locales:** todo “local”, asegurando transferencia por `https:1717` (si TLS) y ejecución como daemon.
+8. **Despliegue:** montar el servidor en una **máquina virtual**.
+9. **Cliente → nube:** configurar el cliente para enviar imágenes hacia la VM remota.
+
+*En paralelo:*
+
+1. **Investigación y justificación**: bibliotecas empleadas y diseño de daemon en Linux.
+2. **Documentación**: preparación de la documentación y del banco de **preguntas**.
