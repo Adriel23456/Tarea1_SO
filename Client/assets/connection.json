@@ -1,6 +1,6 @@
 {
   "server": {
-    "host": "localhost",
+    "host": "158.23.161.52",
     "port": 1717,
     "protocol": "https"
   },
