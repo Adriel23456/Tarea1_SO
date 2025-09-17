@@ -7,7 +7,7 @@
 void process_gif_image(const char* input_path, const char* image_id,
                       const char* filename, ProcessingType processing_type);
 
-// NUEVO: versión que trabaja desde buffer en memoria
+// NEW: version that works from an in-memory buffer
 void process_gif_image_from_memory(const unsigned char* data, int len,
                                   const char* image_id, const char* filename,
                                   ProcessingType processing_type);

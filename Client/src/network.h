@@ -4,11 +4,12 @@
 #include <gtk/gtk.h>
 #include "protocol.h"
 
-// Callback de progreso (para la UI)
+// Progress callback (for the UI)
 typedef void (*ProgressCallback)(const char* message, double progress);
 
-// Config leída de assets/connection.json
-// Ahora con buffers PROPIOS (no punteros a json-c) para evitar uso de memoria liberada.
+// Configuration read from assets/connection.json
+// Uses its own buffers (not pointers into json-c objects) to avoid
+// use-after-free when the JSON object is released.
 typedef struct {
     char host[256];
     int  port;

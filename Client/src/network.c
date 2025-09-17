@@ -27,10 +27,21 @@ typedef struct {
 } NetStream;
 
 // Utiles
+/*
+ * Byte-order helpers
+ * ------------------
+ * Convert 32-bit integers to/from network byte order.
+ */
 static uint32_t to_be32(uint32_t v) { return htonl(v); }
 static uint32_t from_be32(uint32_t v) { return ntohl(v); }
 
 // Envío/recepción (abstracto, maneja fd o SSL)
+/*
+ * ns_send / ns_recv
+ * ------------------
+ * Thin wrappers that send/receive data over either a plain socket
+ * file descriptor or an OpenSSL SSL object when TLS is enabled.
+ */
 static ssize_t ns_send(NetStream* ns, const void* buf, size_t len) {
     if (ns->ssl) return SSL_write(ns->ssl, buf, (int)len);
     return send(ns->fd, buf, len, 0);
@@ -40,6 +51,12 @@ static ssize_t ns_recv(NetStream* ns, void* buf, size_t len) {
     return recv(ns->fd, buf, len, 0);
 }
 
+/*
+ * send_all / recv_all
+ * --------------------
+ * Helpers that attempt to send/receive exactly `len` bytes, handling
+ * short writes/reads. Return 0 on success, -1 on error.
+ */
 static int send_all(NetStream* ns, const void* buf, size_t len) {
     const uint8_t* p = (const uint8_t*)buf;
     size_t sent = 0;
@@ -61,6 +78,12 @@ static int recv_all(NetStream* ns, void* buf, size_t len) {
     return 0;
 }
 
+/*
+ * send_header / recv_header
+ * --------------------------
+ * Build and transmit protocol MessageHeader structures and read them
+ * back, converting multi-byte fields to host byte order.
+ */
 static int send_header(NetStream* ns, uint8_t type, uint32_t payload_len, const char* image_id) {
     MessageHeader h;
     memset(&h, 0, sizeof(h));
@@ -81,6 +104,12 @@ static int recv_header(NetStream* ns, MessageHeader* out) {
     return 0;
 }
 
+/*
+ * send_message
+ * ------------
+ * Send a header and optional payload in one call. Returns 0 on
+ * success or -1 on failure.
+ */
 static int send_message(NetStream* ns, uint8_t type, const char* image_id,
                         const void* payload, uint32_t payload_len) {
     if (send_header(ns, type, payload_len, image_id) != 0) return -1;
@@ -90,6 +119,14 @@ static int send_message(NetStream* ns, uint8_t type, const char* image_id,
     return 0;
 }
 
+/*
+ * connect_with_retry
+ * ------------------
+ * Resolve and connect to `host:port`, retrying on failure up to
+ * `max_retries`. If `use_tls` is true, perform a TLS handshake and
+ * attach an SSL object to the returned NetStream. Returns 0 on
+ * successful connection, -1 on failure.
+ */
 static int connect_with_retry(const char* host, int port, int timeout_sec,
                               int max_retries, int backoff_ms, NetStream* out_ns,
                               gboolean use_tls) {
@@ -162,6 +199,12 @@ static int connect_with_retry(const char* host, int port, int timeout_sec,
     return -1;
 }
 
+/*
+ * close_stream
+ * ------------
+ * Gracefully shutdown and release resources for a NetStream, closing
+ * the underlying socket and freeing any SSL object.
+ */
 static void close_stream(NetStream* ns) {
     if (!ns) return;
     if (ns->ssl) {
@@ -175,6 +218,12 @@ static void close_stream(NetStream* ns) {
     }
 }
 
+/*
+ * ext_from_filename
+ * -----------------
+ * Return a short file-extension identifier for supported image
+ * formats. Falls back to "bin" for unknown extensions.
+ */
 static const char* ext_from_filename(const char* path) {
     const char* dot = strrchr(path, '.');
     if (!dot || dot == path) return "bin";
@@ -186,6 +235,13 @@ static const char* ext_from_filename(const char* path) {
     return "bin";
 }
 
+/*
+ * base_from_path
+ * --------------
+ * Return a pointer to the filename component of `path` (after the
+ * last path separator). This returns a pointer into the original
+ * string and does not allocate memory.
+ */
 static const char* base_from_path(const char* path) {
     const char* slash = strrchr(path, '/');
 #ifdef _WIN32
@@ -195,6 +251,14 @@ static const char* base_from_path(const char* path) {
     return slash ? slash + 1 : path;
 }
 
+/*
+ * send_one_image
+ * --------------
+ * Connect to the server, perform the handshake (HELLO -> IMAGE_ID_RESP),
+ * send an ImageInfo header and stream the file in chunks. Waits for a
+ * final ACK. Uses `cfg` for connection parameters and invokes `cb`
+ * for progress updates. Returns 0 on success, -1 on error.
+ */
 static int send_one_image(const char* filepath,
                           const NetConfig* cfg,
                           ProcessingType proc_type,

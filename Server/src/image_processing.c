@@ -16,6 +16,13 @@
 // External access to global config
 extern ServerConfig g_cfg;
 
+/*
+ * classify_image_by_color
+ * -----------------------
+ * Compute the dominant color channel for an image buffer.
+ * Returns 'r', 'g' or 'b'. If the buffer has fewer than 3 channels
+ * the function returns 'r' by convention.
+ */
 char classify_image_by_color(unsigned char* data, int width, int height, int channels) {
     if (channels < 3) return 'r';
     
@@ -37,6 +44,14 @@ char classify_image_by_color(unsigned char* data, int width, int height, int cha
         return 'b';
 }
 
+/*
+ * apply_histogram_equalization
+ * ----------------------------
+ * In-place per-channel histogram equalization for the first three
+ * channels (RGB). Alpha channel, if present, is preserved.
+ * Parameters:
+ *  - data: pixel buffer with interleaved channels (row-major).
+ */
 void apply_histogram_equalization(unsigned char* data, int width, int height, int channels) {
     int pixel_count = width * height;
     
@@ -65,6 +80,13 @@ void apply_histogram_equalization(unsigned char* data, int width, int height, in
     }
 }
 
+/*
+ * save_image
+ * ----------
+ * Save image data to disk using stb_image_write. Supports `png` and
+ * `jpg`/`jpeg`. GIFs are saved as PNG to avoid lossy conversion.
+ * Returns non-zero on success, zero on failure (matches stb return).
+ */
 int save_image(const char* path, unsigned char* data, int width, int height, 
                int channels, const char* format) {
     int result = 0;
@@ -84,6 +106,13 @@ int save_image(const char* path, unsigned char* data, int width, int height,
     return result;
 }
 
+/*
+ * process_static_image
+ * --------------------
+ * Load a static image (PNG/JPEG) from disk and optionally perform
+ * color classification and/or histogram equalization. Outputs are
+ * written to configured directories and logging is emitted.
+ */
 void process_static_image(const char* input_path, const char* image_id, 
                          const char* filename, const char* format, 
                          ProcessingType processing_type) {
@@ -152,6 +181,12 @@ void process_static_image(const char* input_path, const char* image_id,
     stbi_image_free(img_data);
 }
 
+/*
+ * process_image
+ * -------------
+ * Top-level image processing entry. Routes GIFs to the GIF pipeline
+ * and other formats to the static pipeline.
+ */
 void process_image(const char* input_path, const char* image_id, 
                   const char* filename, const char* format, 
                   ProcessingType processing_type) {
@@ -165,6 +200,12 @@ void process_image(const char* input_path, const char* image_id,
     process_static_image(input_path, image_id, filename, format, processing_type);
 }
 
+/*
+ * process_image_from_memory
+ * -------------------------
+ * Process an image available in memory. Supports GIFs (handled by
+ * GIF in-memory pipeline) and static images loaded via stb_image.
+ */
 void process_image_from_memory(const unsigned char* data, size_t size,
                                const char* image_id, const char* filename,
                                const char* format, ProcessingType processing_type) {
@@ -187,7 +228,7 @@ void process_image_from_memory(const unsigned char* data, size_t size,
     log_line("Processing (memory) %s: %dx%d, %d ch, type=%u (static)",
              image_id, width, height, channels, processing_type);
 
-    // Clasificación por color
+    // Color classification
     if (processing_type == PROC_COLOR_CLASSIFICATION || processing_type == PROC_BOTH) {
         char dominant_color = classify_image_by_color(img_data, width, height, channels);
         const char* color_dir = g_cfg.colors_red;
@@ -206,7 +247,7 @@ void process_image_from_memory(const unsigned char* data, size_t size,
         }
     }
 
-    // Ecualización de histograma
+    // Histogram equalization
     if (processing_type == PROC_HISTOGRAM || processing_type == PROC_BOTH) {
         size_t img_size = (size_t)width * height * channels;
         unsigned char* hist_data = (unsigned char*)malloc(img_size);

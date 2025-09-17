@@ -21,6 +21,14 @@
 extern ServerConfig g_cfg;
 extern SSL_CTX* get_ssl_ctx(void);
 
+/*
+ * handle_client
+ * -------------
+ * Thread entry that implements the server-side protocol for a single
+ * client connection. It receives messages, reconstructs image data in
+ * memory and enqueues processing jobs. The connection struct is freed
+ * before the thread exits.
+ */
 void* handle_client(void* arg) {
     Conn* c = (Conn*)arg;
 
@@ -33,17 +41,17 @@ void* handle_client(void* arg) {
     uint32_t total_size = 0;
     ProcessingType  processing_type = 0;
 
-    // Buffer en memoria para la imagen completa
+    // In-memory buffer for the complete incoming image
     unsigned char* img_buf = NULL;
-    size_t         img_cap = 0;   // == total_size esperado
-    size_t         img_off = 0;   // bytes escritos
+    size_t         img_cap = 0;   // == expected total_size
+    size_t         img_off = 0;   // bytes written
 
     int done = 0;
     while (!done) {
         MessageHeader h;
 
         int hr = recv_header(c, &h);
-        if (hr == -2) { // EOF del cliente
+    if (hr == -2) { // client EOF
             log_line("Client closed connection (EOF)");
             break;
         } else if (hr != 0) {
@@ -79,13 +87,13 @@ void* handle_client(void* arg) {
             expected_chunks = from_be32_s(info.total_chunks);
             processing_type = (ProcessingType)info.processing_type;
 
-            // Copias seguras
+            // Safe copies
             { size_t n = strnlen(info.filename, sizeof(current_filename)-1);
               memcpy(current_filename, info.filename, n); current_filename[n] = '\0'; }
             { size_t n = strnlen(info.format, sizeof(current_format)-1);
               memcpy(current_format, info.format, n); current_format[n] = '\0'; }
 
-            // Reservar buffer en memoria
+            // Allocate buffer in memory
             img_buf = (unsigned char*)malloc(total_size);
             if (!img_buf) {
                 log_line("OOM allocating %u bytes for incoming image", total_size);
@@ -113,7 +121,7 @@ void* handle_client(void* arg) {
                 break;
             }
 
-            // Copiar al buffer acumulado
+            // Copy into the accumulated buffer
             if (img_off + to_read > img_cap) {
                 free(tmp);
                 log_line("Chunk overflow (img_off=%zu to_read=%zu cap=%zu)", img_off, to_read, img_cap);
@@ -150,11 +158,11 @@ void* handle_client(void* arg) {
                      h.image_id, current_filename, final_fmt,
                      received_chunks, remaining_bytes);
 
-            // Encolar trabajo en memoria (el buffer pasa a ser propiedad del scheduler)
+            // Enqueue in-memory job (the buffer ownership transfers to the scheduler)
             if (processing_type > 0 && img_buf && img_off == img_cap) {
                 ProcJob job;
                 memset(&job, 0, sizeof(job));
-                job.data = img_buf;          // transferimos propiedad
+                job.data = img_buf;          // transfer ownership
                 job.size = img_cap;
                 { size_t n = strnlen(h.image_id, sizeof(job.image_id)-1);
                   memcpy(job.image_id, h.image_id, n); job.image_id[n] = '\0'; }
@@ -167,18 +175,18 @@ void* handle_client(void* arg) {
 
                 if (scheduler_enqueue(&job) != 0) {
                     log_line("Scheduler enqueue failed for id=%s", h.image_id);
-                    // si falla, liberamos el buffer aquí
+                    // if enqueue fails, free the buffer here
                     free(img_buf);
                 }
-                // el scheduler posee el buffer ahora
+                // the scheduler owns the buffer now
                 img_buf = NULL; img_cap = img_off = 0;
             } else {
-                // En caso de no procesar, liberar si quedó asignado
+                // If not processing, free buffer if allocated
                 free(img_buf);
                 img_buf = NULL; img_cap = img_off = 0;
             }
 
-            // ACK final
+            // Final ACK
             if (send_message(c, MSG_ACK, h.image_id, NULL, 0) != 0) {
                 log_line("Failed sending final ACK");
                 break;
@@ -192,7 +200,7 @@ void* handle_client(void* arg) {
             total_size = 0;
             processing_type = 0;
 
-            // Modo "una imagen por conexión": cerrar limpio tras COMPLETE
+            // Single-image-per-connection mode: close cleanly after COMPLETE
             done = 1;
 
         } else {
@@ -207,7 +215,7 @@ void* handle_client(void* arg) {
         }
     }
 
-    // cleanup buffer si la conexión termina a mitad
+    // cleanup buffer if the connection ends midway
     if (img_buf) { free(img_buf); img_buf = NULL; }
 
     conn_close(c);
@@ -220,14 +228,28 @@ volatile sig_atomic_t g_terminate = 0;
 volatile sig_atomic_t g_reload = 0;
 static int g_listen_fd = -1;
 
+/*
+ * server_request_shutdown
+ * -----------------------
+ * Request an orderly shutdown of the server: set a termination flag
+ * and shutdown the listening socket to interrupt `accept`.
+ */
 void server_request_shutdown(void) {
     g_terminate = 1;
     if (g_listen_fd >= 0) {
         shutdown(g_listen_fd, SHUT_RDWR);
-        // no cerramos aquí; lo cerramos al salir del bucle principal
+        // the listening fd is closed by the main loop
     }
 }
 
+/*
+ * start_server
+ * ------------
+ * Start the TCP (or TLS) server: create a listening socket and accept
+ * incoming connections. For each accepted connection a detached thread
+ * is spawned to handle the client.
+ * Returns 0 on clean shutdown, -1 on fatal error during startup.
+ */
 int start_server(void) {
     // Initialize TLS if enabled
     if (g_cfg.tls_enabled) {
@@ -285,13 +307,13 @@ int start_server(void) {
         int fd = accept(srv, (struct sockaddr*)&cli, &clilen);
 
         if (fd < 0) {
-            if (g_terminate) break;       // estamos cerrando
-            if (errno == EINTR) continue; // señal interrumpió accept
+            if (g_terminate) break;       // shutting down
+            if (errno == EINTR) continue; // signal interrupted accept
             perror("accept");
             continue;
         }
 
-        // Opcional: timeouts de I/O para evitar bloqueos eternos
+        // Optional: I/O timeouts to avoid permanent blocking
         struct timeval tv = { .tv_sec = 15, .tv_usec = 0 };
         setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
         setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
@@ -301,14 +323,14 @@ int start_server(void) {
         inet_ntop(AF_INET, &cli.sin_addr, cip, sizeof(cip));
         log_line("Accepted connection from %s:%d", cip, ntohs(cli.sin_port));
 
-        // Observa si hubo petición de recarga (SIGHUP)
+    // Check whether a reload was requested (SIGHUP)
         if (g_reload) {
             g_reload = 0;
             log_line("Reload flag observed (SIGHUP)");
-            // Aquí podrías reabrir config/log si quisieras una recarga en caliente.
+            // Here you could re-open config/log if you wanted hot reload.
         }
 
-        // Crear estructura de conexión
+    // Create connection structure
         Conn* c = (Conn*)calloc(1, sizeof(Conn));
         if (!c) {
             close(fd);
@@ -317,7 +339,7 @@ int start_server(void) {
         c->fd = fd;
         c->ssl = NULL;
 
-        // Configurar TLS si está habilitado
+    // Configure TLS if enabled
         if (g_cfg.tls_enabled) {
             SSL* ssl = SSL_new(get_ssl_ctx());
             if (!ssl) {
@@ -339,17 +361,17 @@ int start_server(void) {
             c->ssl = ssl;
         }
 
-        // Lanzar hilo para atender al cliente
-        pthread_t th;
-        int rc = pthread_create(&th, NULL, handle_client, c);
-        if (rc != 0) {
-            log_line("pthread_create failed");
-            conn_close(c);
-            free(c);
-            continue;
-        }
-        pthread_detach(th);
-    }
+        // Launch a thread to handle the client
+         pthread_t th;
+         int rc = pthread_create(&th, NULL, handle_client, c);
+         if (rc != 0) {
+             log_line("pthread_create failed");
+             conn_close(c);
+             free(c);
+             continue;
+         }
+         pthread_detach(th);
+     }
 
     close(srv);
     g_listen_fd = -1;

@@ -6,6 +6,16 @@
 #include <string.h>
 #include <json-c/json.h>
 
+/*
+ * set_default_config
+ * ------------------
+ * Initialize a ServerConfig structure with sane default values.
+ * Parameters:
+ *  - c: pointer to a ServerConfig to populate (must be non-NULL).
+ * Notes:
+ *  - This function writes null-terminated strings into fixed-size
+ *    character arrays inside the struct and ensures termination.
+ */
 void set_default_config(ServerConfig* c) {
     c->port = DEFAULT_PORT;
     c->tls_enabled = 0;
@@ -24,6 +34,20 @@ void set_default_config(ServerConfig* c) {
     c->colors_blue[sizeof(c->colors_blue)-1] = '\0';
 }
 
+/*
+ * load_config_json
+ * ----------------
+ * Load configuration from a JSON file and populate the provided
+ * ServerConfig structure. Missing fields are left as defaults.
+ * Parameters:
+ *  - path: filesystem path to the JSON config file.
+ *  - c: pointer to a ServerConfig to populate (must be non-NULL).
+ * Returns:
+ *  - 0 on success, -1 on error (file missing, parse error, or OOM).
+ * Notes:
+ *  - On error the function leaves the provided ServerConfig filled
+ *    with default values (set_default_config called at start).
+ */
 int load_config_json(const char* path, ServerConfig* c) {
     set_default_config(c);
 
@@ -123,6 +147,18 @@ int load_config_json(const char* path, ServerConfig* c) {
     return 0;
 }
 
+/*
+ * ensure_dirs_from_config
+ * ------------------------
+ * Ensure that all directories referenced by a ServerConfig exist.
+ * Parameters:
+ *  - c: pointer to a populated ServerConfig (read-only).
+ * Returns:
+ *  - 0 on success, -1 if any required directory could not be created.
+ * Notes:
+ *  - This will create parent directories for the log file and create
+ *    directories for histograms, color buckets and TLS assets.
+ */
 int ensure_dirs_from_config(const ServerConfig* c) {
     if (ensure_parent_dir(c->log_file) != 0) return -1;
     if (mkdir_p(c->histogram_dir, 0755) != 0) return -1;

@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdatomic.h>
 
-// ---- Min-heap por total_size ascendente ----
+// ---- Min-heap ordered by ascending total_size ----
 typedef struct {
     ProcJob* data;
     size_t   size;
@@ -27,6 +27,12 @@ static int  heap_pop_min(JobHeap* h, ProcJob* out);
 static void free_job(ProcJob* j);
 static void* worker_main(void* arg);
 
+/*
+ * scheduler_init
+ * --------------
+ * Initialize the background scheduler and start the worker thread.
+ * Returns 0 on success, -1 on failure.
+ */
 int scheduler_init(void) {
     pthread_mutex_lock(&g_mtx);
     g_heap.data = NULL;
@@ -45,6 +51,14 @@ int scheduler_init(void) {
     return 0;
 }
 
+/*
+ * scheduler_enqueue
+ * -----------------
+ * Enqueue a processing job. The ProcJob structure's `data` buffer is
+ * assumed to be owned by the caller and will become owned by the
+ * scheduler on successful enqueue (the worker will free it).
+ * Returns 0 on success, -1 on error.
+ */
 int scheduler_enqueue(const ProcJob* job) {
     if (!job || !job->data || job->size == 0) return -1;
 
@@ -64,6 +78,12 @@ int scheduler_enqueue(const ProcJob* job) {
     return 0;
 }
 
+/*
+ * scheduler_shutdown
+ * ------------------
+ * Stop the worker thread, drain and free any queued jobs, and release
+ * scheduler resources. Safe to call multiple times.
+ */
 void scheduler_shutdown(void) {
     pthread_mutex_lock(&g_mtx);
     if (g_running) {
@@ -75,7 +95,7 @@ void scheduler_shutdown(void) {
         pthread_mutex_unlock(&g_mtx);
     }
 
-    // vaciar heap y liberar buffers
+    // drain heap and free buffers
     pthread_mutex_lock(&g_mtx);
     for (size_t i = 0; i < g_heap.size; ++i) {
         free_job(&g_heap.data[i]);
@@ -88,6 +108,12 @@ void scheduler_shutdown(void) {
     log_line("Scheduler: worker thread stopped");
 }
 
+/*
+ * worker_main
+ * -----------
+ * Main loop for the scheduler worker thread: wait for jobs, process
+ * them using the image processing pipeline and free job buffers.
+ */
 static void* worker_main(void* arg) {
     (void)arg;
     for (;;) {

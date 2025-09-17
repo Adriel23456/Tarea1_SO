@@ -14,19 +14,35 @@
 // Global configuration
 ServerConfig g_cfg;
 
-// Señales: handlers
+// Signals: handlers
 static const char* g_pidfile = NULL;
 
+/*
+ * handle_sigterm
+ * --------------
+ * Signal handler for termination signals. Requests server shutdown.
+ */
 static void handle_sigterm(int sig) {
     (void)sig;
     server_request_shutdown();
 }
 
+/*
+ * handle_sighup
+ * -------------
+ * Signal handler for SIGHUP: marks configuration reload request.
+ */
 static void handle_sighup(int sig) {
     (void)sig;
     g_reload = 1;
 }
 
+/*
+ * install_signal_handlers
+ * -----------------------
+ * Install process signal handlers used by the server (SIGTERM, SIGINT,
+ * SIGHUP). This is called once on startup.
+ */
 static void install_signal_handlers(void) {
     struct sigaction sa;
     sigemptyset(&sa.sa_mask);
@@ -40,16 +56,30 @@ static void install_signal_handlers(void) {
     sigaction(SIGHUP, &sa, NULL);
 }
 
+/*
+ * usage
+ * -----
+ * Print basic command-line usage help to stderr.
+ */
 static void usage(const char* prog) {
     fprintf(stderr,
         "Usage: %s [--config <path>] [--daemon] [--pidfile <path>] [--foreground]\n"
-        "       --config    Ruta a config.json (default: assets/config.json)\n"
-        "       --daemon    Doble fork + PIDFile (modo clasico deamon)\n"
-        "       --pidfile   Ruta del PIDFile (default: /run/ImageService.pid)\n"
-        "       --foreground (por defecto) correr en foreground (ideal para systemd)\n",
+        "       --config    Path to config.json (default: assets/config.json)\n"
+        "       --daemon    Double-fork + PIDFile (classic daemon mode)\n"
+        "       --pidfile   Path for PIDFile (default: /run/ImageService.pid)\n"
+        "       --foreground (default) run in foreground (good for systemd)\n",
         prog);
 }
 
+/*
+ * main
+ * ----
+ * Application entry point. Responsibilities:
+ *  - parse command line options
+ *  - load configuration and create required directories
+ *  - initialize logging, scheduler and server
+ *  - optionally daemonize and write pidfile
+ */
 int main(int argc, char** argv) {
     const char* cfg_path = "assets/config.json";
     int use_daemon = 0;
@@ -71,7 +101,7 @@ int main(int argc, char** argv) {
     }
     g_pidfile = use_daemon ? pidfile : NULL;
 
-    // Carga config
+    // Load config
     if (load_config_json(cfg_path, &g_cfg) != 0) set_default_config(&g_cfg);
     if (ensure_dirs_from_config(&g_cfg) != 0) {
         fprintf(stderr, "Failed to create required directories from config\n");
@@ -84,10 +114,10 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    // Señales
+    // Signals
     install_signal_handlers();
 
-    // Daemon clásico (opcional)
+    // Classic daemon mode (optional)
     if (use_daemon) {
         if (daemonize_and_write_pid(pidfile) != 0) {
             fprintf(stderr, "Failed to daemonize/write pidfile\n");

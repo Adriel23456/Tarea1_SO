@@ -11,13 +11,22 @@
 #include <string.h>
 
 // Escribe el PID del proceso actual en pidfile.
-// Devuelve 0 en éxito, -1 en error (y deja errno configurado).
+// Returns 0 on success, -1 on error (errno is set).
+/*
+ * write_pidfile
+ * -------------
+ * Write the current process PID into `pidfile`.
+ * Parameters:
+ *  - pidfile: path to write the PID (if NULL, function is a no-op).
+ * Returns:
+ *  - 0 on success, -1 on failure (errno is set accordingly).
+ */
 static int write_pidfile(const char* pidfile) {
     if (!pidfile) return 0;
 
     int fd = open(pidfile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd < 0) {
-        // Si falla por directorio inexistente, se deja error a quien llama
+        // If it fails due to a missing directory, leave the error for the caller
         return -1;
     }
 
@@ -43,6 +52,16 @@ static int write_pidfile(const char* pidfile) {
     return 0;
 }
 
+/*
+ * daemonize_and_write_pid
+ * -----------------------
+ * Perform a standard double-fork daemonization sequence and write the
+ * new daemon PID into `pidfile` if provided.
+ * Parameters:
+ *  - pidfile: path to write the child PID, or NULL to skip.
+ * Returns:
+ *  - 0 on success, -1 on failure.
+ */
 int daemonize_and_write_pid(const char* pidfile) {
     // fork #1
     pid_t pid = fork();
@@ -51,10 +70,10 @@ int daemonize_and_write_pid(const char* pidfile) {
         return -1;
     }
     if (pid > 0) {
-        _exit(0); // padre sale
+        _exit(0); // parent exits
     }
 
-    // nueva sesión
+    // create a new session
     if (setsid() < 0) {
         perror("setsid");
         return -1;
@@ -67,14 +86,14 @@ int daemonize_and_write_pid(const char* pidfile) {
         return -1;
     }
     if (pid > 0) {
-        _exit(0); // líder de sesión sale
+    _exit(0); // session leader exits
     }
 
-    // permisos y directorio de trabajo
+    // file mode mask and working directory
     umask(0);
     if (chdir("/") != 0) {
         perror("chdir(/)");
-        return -1;   // <-- esto elimina el warning
+        return -1;   // <-- this removes the warning
     }
 
     // redirigir stdin/stdout/stderr a /dev/null
@@ -86,10 +105,10 @@ int daemonize_and_write_pid(const char* pidfile) {
         if (fd > STDERR_FILENO) (void)close(fd);
     } else {
         perror("open(/dev/null)");
-        // no abortamos: en la práctica el demonio aún puede correr
+    // do not abort: the daemon can continue running in practice
     }
 
-    // escribir PIDFile (si se pidió)
+    // write PID file (if requested)
     if (pidfile && write_pidfile(pidfile) != 0) {
         perror("write_pidfile");
         return -1;
@@ -98,11 +117,17 @@ int daemonize_and_write_pid(const char* pidfile) {
     return 0;
 }
 
+/*
+ * remove_pidfile
+ * --------------
+ * Remove the PID file if it exists. Non-fatal if file is absent.
+ * Returns 0 on success, -1 if unlink failed for reasons other than ENOENT.
+ */
 int remove_pidfile(const char* pidfile) {
     if (!pidfile) return 0;
-    // No pasa nada si no existe
+    // It's fine if the file does not exist
     if (unlink(pidfile) != 0 && errno != ENOENT) {
-        // No lo tratamos como fatal
+        // Not treated as fatal
         return -1;
     }
     return 0;

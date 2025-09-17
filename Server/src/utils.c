@@ -7,6 +7,11 @@
 #include <libgen.h>
 #include <arpa/inet.h>
 
+/*
+ * to_be32_s / from_be32_s
+ * -----------------------
+ * Helpers to convert 32-bit integers to/from network byte order.
+ */
 uint32_t to_be32_s(uint32_t v) { 
     return htonl(v); 
 }
@@ -15,6 +20,12 @@ uint32_t from_be32_s(uint32_t v) {
     return ntohl(v); 
 }
 
+/*
+ * mkdir_p
+ * -------
+ * Create directories recursively (like `mkdir -p`). Returns 0 on
+ * success, -1 on failure. `mode` is applied to newly created dirs.
+ */
 int mkdir_p(const char* path, mode_t mode) {
     // Create all components of 'path' recursively
     if (!path || !*path) return -1;
@@ -45,6 +56,12 @@ int mkdir_p(const char* path, mode_t mode) {
     return 0;
 }
 
+/*
+ * ensure_parent_dir
+ * -----------------
+ * Ensure the parent directory of `file_path` exists. Returns 0 on
+ * success or -1 on failure.
+ */
 int ensure_parent_dir(const char* file_path) {
     // Create parent directory for a file path
     char buf[1024];
@@ -55,6 +72,13 @@ int ensure_parent_dir(const char* file_path) {
     return mkdir_p(d, 0755);
 }
 
+/*
+ * read_file_fully
+ * ----------------
+ * Read an entire file into a newly allocated buffer. On success
+ * returns the buffer and sets *out_len to its size. Caller must free
+ * the returned buffer. Returns NULL on error.
+ */
 unsigned char* read_file_fully(const char* path, int* out_len) {
     FILE* f = fopen(path, "rb");
     if (!f) return NULL;

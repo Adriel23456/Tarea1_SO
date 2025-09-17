@@ -23,11 +23,25 @@ typedef struct {
 } SendDialogData;
 
 // Progress callback
+/*
+ * send_progress_callback
+ * ----------------------
+ * Simple progress callback used by the sending thread to report
+ * human-readable progress messages. This implementation prints to
+ * stdout; the GUI could be updated instead if needed.
+ */
 static void send_progress_callback(const char* message, double progress) {
     printf("%s (%.0f%%)\n", message, progress * 100);
 }
 
 // NO SE JAJA
+/*
+ * send_thread_func
+ * ----------------
+ * Thread function that reads `assets/connection.json` to populate a
+ * `NetConfig` and then calls `send_all_images` to transmit images.
+ * The thread returns an integer status encoded in a gpointer.
+ */
 static gpointer send_thread_func(gpointer data) {
     SendDialogData *dialog_data = (SendDialogData*)data;
 
@@ -99,8 +113,11 @@ static gpointer send_thread_func(gpointer data) {
 // Global app data
 static AppData *g_app_data = NULL;
 
-/**
- * Application activation callback
+/*
+ * on_app_activate
+ * ----------------
+ * GTK application activation callback. Allocates and initializes the
+ * global `AppData` and creates the main window.
  */
 void on_app_activate(GtkApplication *app, gpointer user_data) {
     (void)user_data; // Suppress unused parameter warning
@@ -113,8 +130,11 @@ void on_app_activate(GtkApplication *app, gpointer user_data) {
     create_main_window(app_data);
 }
 
-/**
- * Create the main application window
+/*
+ * create_main_window
+ * ------------------
+ * Build and present the application's main window, wire callbacks to
+ * UI actions and initialize widgets used to display loaded images.
  */
 void create_main_window(AppData *app_data) {
     GtkWidget *main_box;
@@ -257,8 +277,12 @@ void create_main_window(AppData *app_data) {
     gtk_window_present(GTK_WINDOW(app_data->window));
 }
 
-/**
- * Load button callback - Opens file chooser for image selection
+/*
+ * on_load_button_clicked
+ * ----------------------
+ * Open a file chooser dialog (multi-select) to let the user pick
+ * image files. The selected files are handled asynchronously by
+ * `on_file_dialog_multiple_response`.
  */
 void on_load_button_clicked(GtkWidget *button, gpointer user_data) {
     (void)button; // Suppress unused parameter warning
@@ -292,8 +316,11 @@ void on_load_button_clicked(GtkWidget *button, gpointer user_data) {
                                  (GAsyncReadyCallback)on_file_dialog_multiple_response, app_data);
 }
 
-/**
- * Configuration button callback - Opens configuration editor
+/*
+ * on_config_button_clicked
+ * ------------------------
+ * Show the configuration editor dialog when the Configuration
+ * button is pressed.
  */
 void on_config_button_clicked(GtkWidget *button, gpointer user_data) {
     (void)button; // Suppress unused parameter warning
@@ -301,8 +328,12 @@ void on_config_button_clicked(GtkWidget *button, gpointer user_data) {
     show_config_dialog(GTK_WINDOW(app_data->window));
 }
 
-/**
- * Updated send button callback
+/*
+ * on_send_button_clicked
+ * ----------------------
+ * Present a modal dialog to select processing type, then spawn a
+ * worker thread to send images to the server. Shows a progress
+ * dialog while the transfer runs and displays a completion message.
  */
 void on_send_button_clicked(GtkWidget *button, gpointer user_data) {
     (void)button;
@@ -315,7 +346,7 @@ void on_send_button_clicked(GtkWidget *button, gpointer user_data) {
         return;
     }
 
-    /* --- Crear ventana modal para escoger el tipo de procesamiento --- */
+    /* --- Create modal window to choose processing type --- */
     GtkWidget *dialog_win = gtk_window_new();
     gtk_window_set_title(GTK_WINDOW(dialog_win), "Select Processing Type");
     gtk_window_set_transient_for(GTK_WINDOW(dialog_win), GTK_WINDOW(app_data->window));
@@ -345,7 +376,7 @@ void on_send_button_clicked(GtkWidget *button, gpointer user_data) {
     gtk_box_append(GTK_BOX(vbox), radio_color);
     gtk_box_append(GTK_BOX(vbox), radio_both);
 
-    /* Botonera */
+    /* Button row */
     GtkWidget *hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     gtk_widget_set_halign(hbox, GTK_ALIGN_END);
     GtkWidget *btn_cancel = gtk_button_new_with_label("Cancel");
@@ -360,26 +391,26 @@ void on_send_button_clicked(GtkWidget *button, gpointer user_data) {
 
     /* Usar un loop local para simular 'run' y esperar el click */
     GMainLoop *loop = g_main_loop_new(NULL, FALSE);
-    int response = GTK_RESPONSE_CANCEL;  /* por defecto */
+    int response = GTK_RESPONSE_CANCEL;  /* default */
 
     /* Callbacks locales */
     g_signal_connect_swapped(btn_cancel, "clicked", G_CALLBACK(g_main_loop_quit), loop);
     g_signal_connect_swapped(btn_send,   "clicked", G_CALLBACK(g_main_loop_quit), loop);
 
-    /* Guardar punteros para leer estado al salir */
+    /* Store pointers to read state after exiting */
     g_object_set_data(G_OBJECT(dialog_win), "radio_hist", radio_hist);
     g_object_set_data(G_OBJECT(dialog_win), "radio_color", radio_color);
     g_object_set_data(G_OBJECT(dialog_win), "radio_both", radio_both);
     g_object_set_data(G_OBJECT(dialog_win), "btn_send", btn_send);
 
-    /* Ejecutar el loop: cuando se pulse Send o Cancel, se sale */
+    /* Run the loop: when Send or Cancel is pressed, exit */
     g_main_loop_run(loop);
 
     /* Decidir respuesta: si el último click fue en 'Send' => OK */
     {
-        /* Heurística simple: si la ventana aún existe y el botón Send tiene foco,
-           o simplemente verifica si Send fue el último que emitió "clicked".
-           Más robusto: setear un flag en los callbacks. */
+          /* Simple heuristic: if the window still exists and Send has focus,
+              or check if Send was the last to emit "clicked".
+              A more robust approach is to set a flag in the callbacks. */
         gboolean send_pressed = gtk_widget_has_focus(btn_send);
         response = send_pressed ? GTK_RESPONSE_OK : GTK_RESPONSE_CANCEL;
     }
@@ -443,8 +474,10 @@ void on_send_button_clicked(GtkWidget *button, gpointer user_data) {
                         "Image transfer finished!");
 }
 
-/**
- * Credits button callback - Shows credits dialog
+/*
+ * on_credits_button_clicked
+ * -------------------------
+ * Show the credits dialog when the Credits button is pressed.
  */
 void on_credits_button_clicked(GtkWidget *button, gpointer user_data) {
     (void)button; // Suppress unused parameter warning
@@ -452,8 +485,10 @@ void on_credits_button_clicked(GtkWidget *button, gpointer user_data) {
     show_credits_dialog(GTK_WINDOW(app_data->window));
 }
 
-/**
- * Exit button callback - Closes the application
+/*
+ * on_exit_button_clicked
+ * ----------------------
+ * Clean up loaded images and close the main application window.
  */
 void on_exit_button_clicked(GtkWidget *button, gpointer user_data) {
     (void)button; // Suppress unused parameter warning
@@ -468,8 +503,11 @@ void on_exit_button_clicked(GtkWidget *button, gpointer user_data) {
     gtk_window_close(GTK_WINDOW(app_data->window));
 }
 
-/**
- * Add an image to the list display
+/*
+ * add_image_to_list
+ * -----------------
+ * Add a visual row for `filepath` into the main window's image
+ * list and append the path to `app_data->loaded_images`.
  */
 void add_image_to_list(AppData *app_data, const char *filepath) {
     GtkWidget *row_box;
@@ -541,8 +579,11 @@ void add_image_to_list(AppData *app_data, const char *filepath) {
     g_object_unref(file);
 }
 
-/**
- * Clear all images from the list
+/*
+ * clear_image_list
+ * -----------------
+ * Remove all visual entries from the image list widget and free the
+ * stored loaded image paths in `app_data`.
  */
 void clear_image_list(AppData *app_data) {
     GtkWidget *child;

@@ -9,6 +9,13 @@ static FILE* g_log = NULL;
 // Mutex for thread-safe logging
 static pthread_mutex_t g_log_mtx = PTHREAD_MUTEX_INITIALIZER;
 
+/*
+ * log_init
+ * --------
+ * Initialize the global logging subsystem by opening `log_file` for
+ * appending. If a previous log handle was open, it is closed first.
+ * Returns 0 on success, -1 on failure.
+ */
 int log_init(const char* log_file) {
     if (g_log) {
         fclose(g_log);
@@ -22,6 +29,12 @@ int log_init(const char* log_file) {
     return 0;
 }
 
+/*
+ * log_line
+ * --------
+ * Thread-safe formatted logging helper. Writes a timestamped line to
+ * the configured log file. If logging is not initialized this is a no-op.
+ */
 void log_line(const char* fmt, ...) {
     if (!g_log) return;
     
@@ -49,6 +62,11 @@ void log_line(const char* fmt, ...) {
     pthread_mutex_unlock(&g_log_mtx);
 }
 
+/*
+ * log_close
+ * ---------
+ * Close the global log file if open. Safe to call multiple times.
+ */
 void log_close(void) {
     if (g_log) {
         fclose(g_log);

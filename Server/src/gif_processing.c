@@ -17,6 +17,17 @@
 // External access to global config
 extern ServerConfig g_cfg;
 
+/*
+ * to_rgba
+ * -------
+ * Convert pixel data with `comp` components per pixel into an RGBA
+ * buffer (4 bytes per pixel). The returned buffer is heap-allocated
+ * and must be freed by the caller. Returns NULL on OOM.
+ * Parameters:
+ *  - src: source pixel buffer.
+ *  - w, h: image dimensions.
+ *  - comp: number of components in source (1=gray,3=RGB,4=RGBA).
+ */
 unsigned char* to_rgba(const unsigned char* src, int w, int h, int comp) {
     size_t n = (size_t)w * h;
     unsigned char* out = (unsigned char*)malloc(n * 4);
@@ -46,6 +57,15 @@ unsigned char* to_rgba(const unsigned char* src, int w, int h, int comp) {
     return out;
 }
 
+/*
+ * write_gif_animation
+ * -------------------
+ * Write an animated GIF at `path` composed of `frame_count` frames.
+ * The frames are provided as pointers to RGBA buffers. `delays_in`
+ * may be NULL; when present delays are interpreted heuristically as
+ * either milliseconds or centiseconds and normalized.
+ * Returns 1 on success, 0 on failure.
+ */
 int write_gif_animation(const char* path, unsigned char** frames_rgba,
                        const int* delays_in, int frame_count, 
                        int w, int h) {
@@ -90,6 +110,13 @@ int write_gif_animation(const char* path, unsigned char** frames_rgba,
     return 1;
 }
 
+/*
+ * process_gif_image
+ * -----------------
+ * Read a GIF file from disk and run processing pipelines (color
+ * classification and/or histogram equalization) depending on
+ * `processing_type`. Outputs are written under configured directories.
+ */
 void process_gif_image(const char* input_path, const char* image_id, 
                       const char* filename, ProcessingType processing_type) {
     // Read file into memory
@@ -224,6 +251,13 @@ void process_gif_image(const char* input_path, const char* image_id,
     if (delays) free(delays);
 }
 
+/*
+ * process_gif_image_from_memory
+ * ------------------------------
+ * Like process_gif_image but operates on an in-memory buffer `data`
+ * of length `len`. Used when the image is received over the network
+ * and already available in memory.
+ */
 void process_gif_image_from_memory(const unsigned char* data, int len,
                                   const char* image_id, const char* filename,
                                   ProcessingType processing_type) {

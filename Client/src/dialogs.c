@@ -14,8 +14,15 @@
 static void on_config_save_clicked(GtkWidget *button, gpointer user_data);
 static void on_credits_close_clicked(GtkWidget *button, gpointer user_data);
 
-/**
- * Configuration dialog - Edit connection.json
+/*
+ * show_config_dialog
+ * ------------------
+ * Display a configuration editor window that allows the user to view
+ * and edit `assets/connection.json`. If the file does not exist a
+ * default JSON is populated. The edited content is saved back to
+ * `assets/connection.json` when the user clicks Save.
+ * Parameters:
+ *  - parent: optional GtkWindow to set as transient parent for the dialog.
  */
 void show_config_dialog(GtkWindow *parent) {
     GtkWidget *dialog;
@@ -133,8 +140,12 @@ void show_config_dialog(GtkWindow *parent) {
     gtk_window_present(GTK_WINDOW(dialog));
 }
 
-/**
- * Configuration save button handler
+/*
+ * on_config_save_clicked
+ * ----------------------
+ * Callback invoked when the Save button in the configuration editor
+ * is pressed. Retrieves text from the associated text view and writes
+ * it to `assets/connection.json`. Ensures `assets/` exists.
  */
 static void on_config_save_clicked(GtkWidget *button, gpointer user_data) {
     (void)user_data; // Suppress unused parameter warning
@@ -167,8 +178,13 @@ static void on_config_save_clicked(GtkWidget *button, gpointer user_data) {
     gtk_window_destroy(GTK_WINDOW(dialog));
 }
 
-/**
- * Credits dialog - Display credits.txt
+/*
+ * show_credits_dialog
+ * -------------------
+ * Display a read-only credits window populated from
+ * `assets/credits.txt` if present, otherwise a built-in default
+ * credits text is shown. The dialog is modal and transient for
+ * `parent` when provided.
  */
 void show_credits_dialog(GtkWindow *parent) {
     GtkWidget *dialog;
@@ -275,8 +291,11 @@ void show_credits_dialog(GtkWindow *parent) {
     gtk_window_present(GTK_WINDOW(dialog));
 }
 
-/**
- * Credits close button handler
+/*
+ * on_credits_close_clicked
+ * ------------------------
+ * Handler for the Credits dialog Close button. Destroys the dialog
+ * window stored in the button's object data.
  */
 static void on_credits_close_clicked(GtkWidget *button, gpointer user_data) {
     (void)user_data; // Suppress unused parameter warning
@@ -285,8 +304,12 @@ static void on_credits_close_clicked(GtkWidget *button, gpointer user_data) {
     gtk_window_destroy(GTK_WINDOW(dialog));
 }
 
-/**
- * Simple message dialog
+/*
+ * show_message_dialog
+ * -------------------
+ * Display a simple alert dialog with `message`. The `title` is
+ * currently unused by the GTK alert wrapper but is kept for API
+ * compatibility.
  */
 void show_message_dialog(GtkWindow *parent, const char *title, const char *message) {
     (void)title; // Title not used in GtkAlertDialog, suppress warning
@@ -298,8 +321,17 @@ void show_message_dialog(GtkWindow *parent, const char *title, const char *messa
     g_object_unref(alert);
 }
 
-/**
- * File dialog response handler (single file - kept for compatibility)
+/*
+ * on_file_dialog_response
+ * ------------------------
+ * Async callback for a single-file open dialog. If the user selected
+ * a file and it has a supported image extension, the path is added to
+ * the application's image list via `add_image_to_list`. Otherwise an
+ * error message is shown.
+ * Parameters:
+ *  - dialog: the GtkFileDialog instance.
+ *  - result: GAsyncResult from the open operation.
+ *  - user_data: pointer to AppData.
  */
 void on_file_dialog_response(GtkFileDialog *dialog, GAsyncResult *result, gpointer user_data) {
     AppData *app_data = (AppData *)user_data;
@@ -345,8 +377,12 @@ void on_file_dialog_response(GtkFileDialog *dialog, GAsyncResult *result, gpoint
     g_object_unref(dialog);
 }
 
-/**
- * File dialog response handler for multiple files
+/*
+ * on_file_dialog_multiple_response
+ * --------------------------------
+ * Async callback for a multi-file open dialog. Iterates selected
+ * files, validates extensions and adds valid images to the app list.
+ * Shows a summary message if some files were skipped.
  */
 void on_file_dialog_multiple_response(GtkFileDialog *dialog, GAsyncResult *result, gpointer user_data) {
     AppData *app_data = (AppData *)user_data;

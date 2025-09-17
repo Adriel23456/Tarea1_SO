@@ -9,6 +9,16 @@
 // Global SSL context
 static SSL_CTX* g_ssl_ctx = NULL;
 
+/*
+ * tls_init_ctx
+ * ------------
+ * Initialize a global OpenSSL server context using certificate and key
+ * files located in `tls_dir`.
+ * Parameters:
+ *  - tls_dir: directory containing `server.crt` and `server.key`.
+ * Returns:
+ *  - 0 on success, -1 on failure.
+ */
 int tls_init_ctx(const char* tls_dir) {
     // Initialize OpenSSL
     SSL_library_init();
@@ -34,6 +44,11 @@ int tls_init_ctx(const char* tls_dir) {
     return 0;
 }
 
+/*
+ * tls_cleanup
+ * -----------
+ * Free global SSL_CTX and cleanup TLS resources.
+ */
 void tls_cleanup(void) {
     if (g_ssl_ctx) {
         SSL_CTX_free(g_ssl_ctx);
@@ -41,10 +56,28 @@ void tls_cleanup(void) {
     }
 }
 
+/*
+ * get_ssl_ctx
+ * -----------
+ * Return the global SSL_CTX previously initialized with tls_init_ctx.
+ * Returns NULL if TLS is not initialized.
+ */
 SSL_CTX* get_ssl_ctx(void) {
     return g_ssl_ctx;
 }
 
+/*
+ * cs_send_all
+ * -----------
+ * Send exactly `len` bytes over a connection, using TLS if the
+ * connection's SSL pointer is set, otherwise send over the raw socket.
+ * Parameters:
+ *  - c: connection object (must be non-NULL).
+ *  - buf: data buffer to send.
+ *  - len: number of bytes to send.
+ * Returns:
+ *  - 0 on success, -1 on any send error.
+ */
 int cs_send_all(Conn* c, const void* buf, size_t len) {
     const unsigned char* p = (const unsigned char*)buf;
     size_t s = 0;
@@ -61,6 +94,13 @@ int cs_send_all(Conn* c, const void* buf, size_t len) {
     return 0;
 }
 
+/*
+ * cs_recv_all
+ * -----------
+ * Receive exactly `len` bytes into `buf` from the connection. Uses
+ * SSL_read if `c->ssl` is set or `recv` otherwise. Handles short reads.
+ * Returns 0 on success, -1 on error, or -2 on orderly EOF (peer closed).
+ */
 int cs_recv_all(Conn* c, void* buf, size_t len) {
     unsigned char* p = (unsigned char*)buf;
     size_t r = 0;
@@ -71,8 +111,8 @@ int cs_recv_all(Conn* c, void* buf, size_t len) {
             : recv(c->fd, p + r, len - r, 0);
 
         if (n == 0) {
-            // Cierre ordenado del peer (EOF)
-            return -2; // NUEVO: señalamos EOF de forma diferenciada
+            // orderly close from peer (EOF)
+            return -2; // NEW: signal EOF with a distinct return code
         }
         if (n < 0) {
             return -1; // error real de lectura
@@ -83,6 +123,13 @@ int cs_recv_all(Conn* c, void* buf, size_t len) {
     return 0; // éxito
 }
 
+/*
+ * send_header
+ * -----------
+ * Build and send a protocol MessageHeader containing `type`, payload
+ * length and optional image id. The header is converted to network
+ * byte order where required before sending.
+ */
 int send_header(Conn* c, uint8_t type, uint32_t payload_len, const char* image_id) {
     MessageHeader h;
     memset(&h, 0, sizeof(h));
@@ -100,6 +147,12 @@ int send_header(Conn* c, uint8_t type, uint32_t payload_len, const char* image_i
     return cs_send_all(c, &h, sizeof(h));
 }
 
+/*
+ * recv_header
+ * -----------
+ * Read a MessageHeader from the connection and convert fields to host
+ * byte order. Returns 0 on success, -1 on error, -2 on EOF.
+ */
 int recv_header(Conn* c, MessageHeader* out) {
     int rc = cs_recv_all(c, out, sizeof(*out));
     if (rc != 0) {
@@ -113,6 +166,12 @@ int recv_header(Conn* c, MessageHeader* out) {
     return 0;
 }
 
+/*
+ * send_message
+ * ------------
+ * Convenience helper that sends a header followed by an optional
+ * payload. Returns 0 on success, -1 on failure.
+ */
 int send_message(Conn* c, uint8_t type, const char* image_id,
                 const void* payload, uint32_t payload_len) {
     if (send_header(c, type, payload_len, image_id) != 0) 
@@ -126,6 +185,13 @@ int send_message(Conn* c, uint8_t type, const char* image_id,
     return 0;
 }
 
+/*
+ * conn_close
+ * ----------
+ * Gracefully shutdown and free resources associated with a Conn.
+ * - Performs TLS shutdown and frees SSL object if present.
+ * - Closes the underlying socket and marks file descriptor invalid.
+ */
 void conn_close(Conn* c) {
     if (!c) return;
     
